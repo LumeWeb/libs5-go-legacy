@@ -16,7 +16,7 @@ require (
 	go.etcd.io/bbolt v1.3.8
 	go.sia.tech/jape v0.11.1
 	go.uber.org/fx v1.20.1
-	go.uber.org/zap v1.26.0
+	go.uber.org/zap v1.27.0
 	lukechampine.com/blake3 v1.2.1
 	nhooyr.io/websocket v1.7.1
 )
