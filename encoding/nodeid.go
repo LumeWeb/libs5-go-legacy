@@ -3,8 +3,8 @@ package encoding
 import (
 	"bytes"
 	"errors"
-	"git.lumeweb.com/LumeWeb/libs5-go/internal/bases"
-	"git.lumeweb.com/LumeWeb/libs5-go/utils"
+	"github.com/LumeWeb/libs5-go/internal/bases"
+	"github.com/LumeWeb/libs5-go/utils"
 	"github.com/multiformats/go-multibase"
 )
 

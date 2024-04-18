@@ -3,7 +3,7 @@ package protocol
 import (
 	"bytes"
 	"encoding/base64"
-	"git.lumeweb.com/LumeWeb/libs5-go/types"
+	"github.com/LumeWeb/libs5-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmihailenco/msgpack/v5"
 	"net/url"

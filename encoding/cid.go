@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"git.lumeweb.com/LumeWeb/libs5-go/internal/bases"
-	"git.lumeweb.com/LumeWeb/libs5-go/types"
-	"git.lumeweb.com/LumeWeb/libs5-go/utils"
+	"github.com/LumeWeb/libs5-go/internal/bases"
+	"github.com/LumeWeb/libs5-go/types"
+	"github.com/LumeWeb/libs5-go/utils"
 	"github.com/vmihailenco/msgpack/v5"
 )
 

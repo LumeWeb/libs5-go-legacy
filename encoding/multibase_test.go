@@ -1,7 +1,7 @@
 package encoding
 
 import (
-	"git.lumeweb.com/LumeWeb/libs5-go/encoding/testdata"
+	"github.com/LumeWeb/libs5-go/encoding/testdata"
 	"reflect"
 	"testing"
 )

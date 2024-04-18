@@ -2,10 +2,10 @@ package storage
 
 import (
 	ed25519p "crypto/ed25519"
-	"git.lumeweb.com/LumeWeb/libs5-go/ed25519"
-	"git.lumeweb.com/LumeWeb/libs5-go/encoding"
-	"git.lumeweb.com/LumeWeb/libs5-go/types"
-	"git.lumeweb.com/LumeWeb/libs5-go/utils"
+	"github.com/LumeWeb/libs5-go/ed25519"
+	"github.com/LumeWeb/libs5-go/encoding"
+	"github.com/LumeWeb/libs5-go/types"
+	"github.com/LumeWeb/libs5-go/utils"
 )
 
 func PrepareProvideMessage(identity *ed25519.KeyPairEd25519, hash *encoding.Multihash, location StorageLocation) []byte {

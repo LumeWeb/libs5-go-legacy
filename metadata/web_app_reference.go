@@ -1,6 +1,6 @@
 package metadata
 
-import "git.lumeweb.com/LumeWeb/libs5-go/encoding"
+import "github.com/LumeWeb/libs5-go/encoding"
 
 type WebAppMetadataFileReference struct {
 	ContentType string        `json:"contentType"`

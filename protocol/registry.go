@@ -3,9 +3,9 @@ package protocol
 import (
 	ed25519p "crypto/ed25519"
 	"errors"
-	"git.lumeweb.com/LumeWeb/libs5-go/ed25519"
-	"git.lumeweb.com/LumeWeb/libs5-go/types"
-	"git.lumeweb.com/LumeWeb/libs5-go/utils"
+	"github.com/LumeWeb/libs5-go/ed25519"
+	"github.com/LumeWeb/libs5-go/types"
+	"github.com/LumeWeb/libs5-go/utils"
 )
 
 var (

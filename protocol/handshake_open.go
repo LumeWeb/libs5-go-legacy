@@ -2,7 +2,7 @@ package protocol
 
 import (
 	"fmt"
-	"git.lumeweb.com/LumeWeb/libs5-go/types"
+	"github.com/LumeWeb/libs5-go/types"
 	"github.com/vmihailenco/msgpack/v5"
 )
 

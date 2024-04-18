@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"git.lumeweb.com/LumeWeb/libs5-go/encoding"
-	"git.lumeweb.com/LumeWeb/libs5-go/types"
+	"github.com/LumeWeb/libs5-go/encoding"
+	"github.com/LumeWeb/libs5-go/types"
 )
 
 type ProviderStore interface {

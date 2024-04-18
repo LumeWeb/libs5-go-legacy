@@ -5,8 +5,8 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"encoding/json"
-	"git.lumeweb.com/LumeWeb/libs5-go/types"
-	"git.lumeweb.com/LumeWeb/libs5-go/utils"
+	"github.com/LumeWeb/libs5-go/types"
+	"github.com/LumeWeb/libs5-go/utils"
 )
 
 type MultihashCode = int

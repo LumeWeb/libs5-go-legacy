@@ -1,4 +1,4 @@
-module git.lumeweb.com/LumeWeb/libs5-go
+module github.com/LumeWeb/libs5-go
 
 go 1.21.6
 

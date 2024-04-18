@@ -2,7 +2,7 @@ package metadata
 
 import (
 	"errors"
-	"git.lumeweb.com/LumeWeb/libs5-go/encoding"
+	"github.com/LumeWeb/libs5-go/encoding"
 	"github.com/vmihailenco/msgpack/v5"
 )
 

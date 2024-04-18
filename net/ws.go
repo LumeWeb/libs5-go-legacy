@@ -2,7 +2,7 @@ package net
 
 import (
 	"context"
-	"git.lumeweb.com/LumeWeb/libs5-go/encoding"
+	"github.com/LumeWeb/libs5-go/encoding"
 	"net"
 	"net/url"
 	"nhooyr.io/websocket"

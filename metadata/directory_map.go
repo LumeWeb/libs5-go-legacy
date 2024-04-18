@@ -3,7 +3,7 @@ package metadata
 import (
 	"encoding/json"
 	"fmt"
-	"git.lumeweb.com/LumeWeb/libs5-go/encoding"
+	"github.com/LumeWeb/libs5-go/encoding"
 	"github.com/emirpasic/gods/maps/linkedhashmap"
 	"github.com/vmihailenco/msgpack/v5"
 )

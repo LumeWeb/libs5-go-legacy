@@ -2,7 +2,7 @@ package encoding
 
 import (
 	"errors"
-	"git.lumeweb.com/LumeWeb/libs5-go/internal/bases"
+	"github.com/LumeWeb/libs5-go/internal/bases"
 	"github.com/multiformats/go-multibase"
 )
 

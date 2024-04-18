@@ -3,8 +3,8 @@ package encoding
 import (
 	"encoding/json"
 	"errors"
-	"git.lumeweb.com/LumeWeb/libs5-go/types"
-	"git.lumeweb.com/LumeWeb/libs5-go/utils"
+	"github.com/LumeWeb/libs5-go/types"
+	"github.com/LumeWeb/libs5-go/utils"
 	"github.com/vmihailenco/msgpack/v5"
 )
 

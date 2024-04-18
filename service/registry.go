@@ -1,8 +1,8 @@
 package service
 
 import (
-	"git.lumeweb.com/LumeWeb/libs5-go/net"
-	"git.lumeweb.com/LumeWeb/libs5-go/protocol"
+	"github.com/LumeWeb/libs5-go/net"
+	"github.com/LumeWeb/libs5-go/protocol"
 )
 
 type RegistryService interface {

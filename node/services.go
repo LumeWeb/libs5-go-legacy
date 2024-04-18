@@ -2,7 +2,7 @@ package node
 
 import (
 	"context"
-	"git.lumeweb.com/LumeWeb/libs5-go/service"
+	"github.com/LumeWeb/libs5-go/service"
 )
 
 var (

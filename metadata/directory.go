@@ -2,8 +2,8 @@ package metadata
 
 import (
 	"errors"
-	"git.lumeweb.com/LumeWeb/libs5-go/serialize"
-	"git.lumeweb.com/LumeWeb/libs5-go/types"
+	"github.com/LumeWeb/libs5-go/serialize"
+	"github.com/LumeWeb/libs5-go/types"
 	"github.com/vmihailenco/msgpack/v5"
 )
 

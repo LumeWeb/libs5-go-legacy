@@ -3,8 +3,8 @@ package protocol
 import (
 	"context"
 	"crypto/rand"
-	"git.lumeweb.com/LumeWeb/libs5-go/config"
-	"git.lumeweb.com/LumeWeb/libs5-go/net"
+	"github.com/LumeWeb/libs5-go/config"
+	"github.com/LumeWeb/libs5-go/net"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/zap"
 	"io"

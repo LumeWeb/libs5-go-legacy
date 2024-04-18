@@ -1,8 +1,8 @@
 package config
 
 import (
-	"git.lumeweb.com/LumeWeb/libs5-go/db"
-	"git.lumeweb.com/LumeWeb/libs5-go/ed25519"
+	"github.com/LumeWeb/libs5-go/db"
+	"github.com/LumeWeb/libs5-go/ed25519"
 	"go.uber.org/zap"
 )
 

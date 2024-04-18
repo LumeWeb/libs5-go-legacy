@@ -2,9 +2,9 @@ package _default
 
 import (
 	"context"
-	"git.lumeweb.com/LumeWeb/libs5-go/build"
-	s5net "git.lumeweb.com/LumeWeb/libs5-go/net"
-	"git.lumeweb.com/LumeWeb/libs5-go/service"
+	"github.com/LumeWeb/libs5-go/build"
+	s5net "github.com/LumeWeb/libs5-go/net"
+	"github.com/LumeWeb/libs5-go/service"
 	"github.com/julienschmidt/httprouter"
 	"go.sia.tech/jape"
 	"go.uber.org/zap"

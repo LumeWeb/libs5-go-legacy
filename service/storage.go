@@ -1,10 +1,10 @@
 package service
 
 import (
-	"git.lumeweb.com/LumeWeb/libs5-go/encoding"
-	"git.lumeweb.com/LumeWeb/libs5-go/metadata"
-	"git.lumeweb.com/LumeWeb/libs5-go/storage"
-	"git.lumeweb.com/LumeWeb/libs5-go/types"
+	"github.com/LumeWeb/libs5-go/encoding"
+	"github.com/LumeWeb/libs5-go/metadata"
+	"github.com/LumeWeb/libs5-go/storage"
+	"github.com/LumeWeb/libs5-go/types"
 )
 
 type StorageService interface {

@@ -3,12 +3,12 @@ package protocol
 import (
 	"crypto/ed25519"
 	"fmt"
-	"git.lumeweb.com/LumeWeb/libs5-go/encoding"
-	"git.lumeweb.com/LumeWeb/libs5-go/net"
-	"git.lumeweb.com/LumeWeb/libs5-go/storage"
-	"git.lumeweb.com/LumeWeb/libs5-go/structs"
-	"git.lumeweb.com/LumeWeb/libs5-go/types"
-	"git.lumeweb.com/LumeWeb/libs5-go/utils"
+	"github.com/LumeWeb/libs5-go/encoding"
+	"github.com/LumeWeb/libs5-go/net"
+	"github.com/LumeWeb/libs5-go/storage"
+	"github.com/LumeWeb/libs5-go/structs"
+	"github.com/LumeWeb/libs5-go/types"
+	"github.com/LumeWeb/libs5-go/utils"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/zap"
 )
