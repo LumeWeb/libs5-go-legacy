@@ -37,3 +37,8 @@ func (s *SetImpl) Contains(items ...interface{}) bool {
 	defer s.mutex.RUnlock()
 	return s.Set.Contains(items...)
 }
+func (s *SetImpl) Values() []interface{} {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+	return s.Set.Values()
+}
