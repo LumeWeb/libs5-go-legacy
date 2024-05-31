@@ -13,7 +13,7 @@ require (
 	github.com/samber/lo v1.39.0
 	github.com/stretchr/testify v1.8.1
 	github.com/vmihailenco/msgpack/v5 v5.4.1
-	go.etcd.io/bbolt v1.3.8
+	go.etcd.io/bbolt v1.3.10
 	go.sia.tech/jape v0.11.1
 	go.uber.org/fx v1.20.1
 	go.uber.org/zap v1.26.0
