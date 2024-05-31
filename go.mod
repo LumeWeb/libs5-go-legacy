@@ -18,7 +18,7 @@ require (
 	go.uber.org/fx v1.20.1
 	go.uber.org/zap v1.26.0
 	lukechampine.com/blake3 v1.2.1
-	nhooyr.io/websocket v1.7.1
+	nhooyr.io/websocket v1.8.11
 )
 
 require (
@@ -33,7 +33,6 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
 	golang.org/x/sys v0.15.0 // indirect
-	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
