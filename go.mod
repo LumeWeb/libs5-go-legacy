@@ -1,8 +1,11 @@
 module github.com/LumeWeb/libs5-go
 
-go 1.21.6
+go 1.22
+
+toolchain go1.22.1
 
 require (
+	github.com/LumeWeb/httputil v0.0.0-20240601144746-504fd57b96e6
 	github.com/ddo/rq v0.0.0-20190828174524-b3daa55fcaba
 	github.com/emirpasic/gods v1.18.1
 	github.com/golang/mock v1.6.0

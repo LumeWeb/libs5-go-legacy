@@ -1,11 +1,8 @@
 package service
 
-import (
-	"github.com/julienschmidt/httprouter"
-	"go.sia.tech/jape"
-)
+import "net/http"
 
 type HTTPService interface {
-	GetHttpRouter(inject map[string]jape.Handler) *httprouter.Router
+	GetHttpRouter() map[string]http.HandlerFunc
 	Service
 }

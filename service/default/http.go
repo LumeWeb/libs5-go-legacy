@@ -2,13 +2,13 @@ package _default
 
 import (
 	"context"
+	"github.com/LumeWeb/httputil"
 	"github.com/LumeWeb/libs5-go/build"
 	s5net "github.com/LumeWeb/libs5-go/net"
 	"github.com/LumeWeb/libs5-go/service"
-	"github.com/julienschmidt/httprouter"
-	"go.sia.tech/jape"
 	"go.uber.org/zap"
 	"net"
+	"net/http"
 	"net/url"
 	"nhooyr.io/websocket"
 	"strings"
@@ -35,19 +35,15 @@ func NewHTTP(params service.ServiceParams) *HTTPServiceDefault {
 	}
 }
 
-func (h *HTTPServiceDefault) GetHttpRouter(inject map[string]jape.Handler) *httprouter.Router {
-	routes := map[string]jape.Handler{
+func (h *HTTPServiceDefault) GetHttpRouter() map[string]http.HandlerFunc {
+	routes := map[string]http.HandlerFunc{
 		"GET /s5/version":   h.versionHandler,
 		"GET /s5/p2p":       h.p2pHandler,
 		"GET /s5/p2p/nodes": h.p2pNodesHandler,
 		"GET /s5/p2p/peers": h.p2pPeersHandler,
 	}
 
-	for k, v := range inject {
-		routes[k] = v
-	}
-
-	return jape.Mux(routes)
+	return routes
 }
 
 func (h *HTTPServiceDefault) Start(ctx context.Context) error {
@@ -62,11 +58,11 @@ func (h *HTTPServiceDefault) Init(ctx context.Context) error {
 	return nil
 }
 
-func (h *HTTPServiceDefault) versionHandler(ctx jape.Context) {
-	_, _ = ctx.ResponseWriter.Write([]byte(build.Version))
+func (h *HTTPServiceDefault) versionHandler(w http.ResponseWriter, r *http.Request) {
+	_, _ = w.Write([]byte(build.Version))
 }
-func (h *HTTPServiceDefault) p2pHandler(ctx jape.Context) {
-	c, err := websocket.Accept(ctx.ResponseWriter, ctx.Request, nil)
+func (h *HTTPServiceDefault) p2pHandler(w http.ResponseWriter, r *http.Request) {
+	c, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		h.Logger().Error("error accepting websocket connection", zap.Error(err))
 		return
@@ -87,8 +83,8 @@ func (h *HTTPServiceDefault) p2pHandler(ctx jape.Context) {
 	}
 
 	// Check for reverse proxy headers
-	realIP := ctx.Request.Header.Get("X-Real-IP")
-	forwardedFor := ctx.Request.Header.Get("X-Forwarded-For")
+	realIP := r.Header.Get("X-Real-IP")
+	forwardedFor := r.Header.Get("X-Forwarded-For")
 
 	var clientIP net.IP
 	if realIP != "" {
@@ -139,8 +135,10 @@ func (h *HTTPServiceDefault) p2pHandler(ctx jape.Context) {
 	}()
 }
 
-func (h *HTTPServiceDefault) p2pNodesHandler(ctx jape.Context) {
+func (h *HTTPServiceDefault) p2pNodesHandler(w http.ResponseWriter, r *http.Request) {
 	localId, err := h.Services().P2P().NodeId().ToString()
+
+	ctx := httputil.Context(r, w)
 
 	if ctx.Check("error getting local node id", err) != nil {
 		return
@@ -161,9 +159,11 @@ func (h *HTTPServiceDefault) p2pNodesHandler(ctx jape.Context) {
 		Nodes: nodeList,
 	})
 }
-func (h *HTTPServiceDefault) p2pPeersHandler(ctx jape.Context) {
+func (h *HTTPServiceDefault) p2pPeersHandler(w http.ResponseWriter, r *http.Request) {
 	peers := h.Services().P2P().Peers().Values()
 	peerList := make([]P2PNodeResponse, 0)
+
+	ctx := httputil.Context(r, w)
 
 	for _, p := range peers {
 		peer, ok := p.(s5net.Peer)
