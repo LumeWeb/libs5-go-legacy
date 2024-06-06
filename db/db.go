@@ -8,3 +8,9 @@ type KVStore interface {
 	Delete(key []byte) error
 	Bucket(prefix string) (KVStore, error)
 }
+
+type Cache interface {
+	Get(key []byte) ([]byte, bool)
+	Put(key []byte, value []byte)
+	Delete(key []byte)
+}

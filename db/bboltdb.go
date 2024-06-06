@@ -2,10 +2,17 @@ package db
 
 import (
 	"errors"
+
 	"go.etcd.io/bbolt"
 )
 
 var _ KVStore = (*BboltDBKVStore)(nil)
+
+var (
+	ErrGetRoot    = errors.New("cannot get from root")
+	ErrDeleteRoot = errors.New("cannot delete from root")
+	ErrorPutRoot  = errors.New("cannot put from root")
+)
 
 type BboltDBKVStore struct {
 	db         *bbolt.DB
@@ -13,6 +20,7 @@ type BboltDBKVStore struct {
 	bucketName string
 	root       bool
 	dbPath     string
+	cache      Cache
 }
 
 func (b *BboltDBKVStore) Open() error {
@@ -65,7 +73,14 @@ func (b *BboltDBKVStore) Close() error {
 
 func (b *BboltDBKVStore) Get(key []byte) ([]byte, error) {
 	if b.root {
-		return nil, errors.New("Cannot get from root")
+		return nil, ErrGetRoot
+	}
+
+	// Check if the value exists in the cache
+	if b.cache != nil {
+		if val, ok := b.cache.Get(key); ok {
+			return val, nil
+		}
 	}
 
 	var val []byte
@@ -78,13 +93,17 @@ func (b *BboltDBKVStore) Get(key []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	if val != nil && b.cache != nil {
+		// Add the value to the cache
+		b.cache.Put(key, val)
+	}
+
 	return val, nil
 }
 
 func (b *BboltDBKVStore) Put(key []byte, value []byte) error {
-
 	if b.root {
-		return errors.New("Cannot put from root")
+		return ErrorPutRoot
 	}
 
 	err := b.db.Update(func(txn *bbolt.Tx) error {
@@ -96,12 +115,21 @@ func (b *BboltDBKVStore) Put(key []byte, value []byte) error {
 		return nil
 	})
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Update the cache with the new value
+	if b.cache != nil {
+		b.cache.Put(key, value)
+	}
+
+	return nil
 }
 
 func (b *BboltDBKVStore) Delete(key []byte) error {
 	if b.root {
-		return errors.New("Cannot delete from root")
+		return ErrDeleteRoot
 	}
 
 	err := b.db.Update(func(txn *bbolt.Tx) error {
@@ -113,7 +141,16 @@ func (b *BboltDBKVStore) Delete(key []byte) error {
 		return nil
 	})
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Remove the key from the cache
+	if b.cache != nil {
+		b.cache.Delete(key)
+	}
+
+	return nil
 }
 
 func (b *BboltDBKVStore) Bucket(prefix string) (KVStore, error) {
@@ -122,12 +159,14 @@ func (b *BboltDBKVStore) Bucket(prefix string) (KVStore, error) {
 		bucket:     b.bucket,
 		bucketName: prefix,
 		root:       false,
+		cache:      b.cache,
 	}, nil
 }
 
-func NewBboltDBKVStore(dbPath string) *BboltDBKVStore {
+func NewBboltDBKVStore(dbPath string, cache Cache) *BboltDBKVStore {
 	return &BboltDBKVStore{
 		dbPath: dbPath,
 		root:   true,
+		cache:  cache,
 	}
 }
