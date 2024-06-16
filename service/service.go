@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"github.com/LumeWeb/libs5-go/config"
-	"github.com/LumeWeb/libs5-go/db"
+	"go.lumeweb.com/libs5-go/config"
+	"go.lumeweb.com/libs5-go/db"
 	"go.uber.org/zap"
 )
 

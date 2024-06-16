@@ -2,9 +2,9 @@ package metadata
 
 import (
 	"errors"
-	"github.com/LumeWeb/libs5-go/serialize"
-	"github.com/LumeWeb/libs5-go/types"
 	"github.com/vmihailenco/msgpack/v5"
+	"go.lumeweb.com/libs5-go/serialize"
+	"go.lumeweb.com/libs5-go/types"
 )
 
 type DirectoryMetadata struct {

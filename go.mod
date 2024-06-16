@@ -1,11 +1,10 @@
-module github.com/LumeWeb/libs5-go
+module go.lumeweb.com/libs5-go
 
 go 1.22
 
 toolchain go1.22.1
 
 require (
-	github.com/LumeWeb/httputil v0.0.0-20240601144746-504fd57b96e6
 	github.com/ddo/rq v0.0.0-20190828174524-b3daa55fcaba
 	github.com/emirpasic/gods v1.18.1
 	github.com/golang/mock v1.6.0
@@ -18,6 +17,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	go.etcd.io/bbolt v1.3.8
 	go.etcd.io/etcd/client/v3 v3.5.14
+	go.lumeweb.com/httputil v0.0.0-20240616192644-3d270a528d86
 	go.uber.org/zap v1.26.0
 	lukechampine.com/blake3 v1.2.1
 	nhooyr.io/websocket v1.7.1

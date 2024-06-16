@@ -1,10 +1,10 @@
 package service
 
 import (
-	"github.com/LumeWeb/libs5-go/encoding"
-	"github.com/LumeWeb/libs5-go/net"
-	"github.com/LumeWeb/libs5-go/structs"
-	"github.com/LumeWeb/libs5-go/types"
+	"go.lumeweb.com/libs5-go/encoding"
+	"go.lumeweb.com/libs5-go/net"
+	"go.lumeweb.com/libs5-go/structs"
+	"go.lumeweb.com/libs5-go/types"
 	"net/url"
 	"sync"
 )

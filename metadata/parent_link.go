@@ -2,9 +2,9 @@ package metadata
 
 import (
 	"errors"
-	"github.com/LumeWeb/libs5-go/encoding"
-	"github.com/LumeWeb/libs5-go/types"
 	"github.com/vmihailenco/msgpack/v5"
+	"go.lumeweb.com/libs5-go/encoding"
+	"go.lumeweb.com/libs5-go/types"
 )
 
 var (

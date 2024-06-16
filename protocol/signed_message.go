@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"crypto/ed25519"
 	"errors"
-	"github.com/LumeWeb/libs5-go/config"
-	"github.com/LumeWeb/libs5-go/encoding"
-	"github.com/LumeWeb/libs5-go/types"
 	"github.com/vmihailenco/msgpack/v5"
+	"go.lumeweb.com/libs5-go/config"
+	"go.lumeweb.com/libs5-go/encoding"
+	"go.lumeweb.com/libs5-go/types"
 	"go.uber.org/zap"
 	"io"
 )

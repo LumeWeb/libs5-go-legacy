@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/LumeWeb/libs5-go/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmihailenco/msgpack/v5"
+	"go.lumeweb.com/libs5-go/types"
 	"testing"
 )
 

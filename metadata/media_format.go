@@ -2,8 +2,8 @@ package metadata
 
 import (
 	"errors"
-	"github.com/LumeWeb/libs5-go/encoding"
 	"github.com/vmihailenco/msgpack/v5"
+	"go.lumeweb.com/libs5-go/encoding"
 )
 
 var (

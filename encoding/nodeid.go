@@ -3,9 +3,9 @@ package encoding
 import (
 	"bytes"
 	"errors"
-	"github.com/LumeWeb/libs5-go/internal/bases"
-	"github.com/LumeWeb/libs5-go/utils"
 	"github.com/multiformats/go-multibase"
+	"go.lumeweb.com/libs5-go/internal/bases"
+	"go.lumeweb.com/libs5-go/utils"
 )
 
 var (

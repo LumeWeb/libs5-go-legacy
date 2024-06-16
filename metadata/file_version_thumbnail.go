@@ -1,9 +1,9 @@
 package metadata
 
 import (
-	"github.com/LumeWeb/libs5-go/encoding"
 	"github.com/emirpasic/gods/maps/linkedhashmap"
 	"github.com/vmihailenco/msgpack/v5"
+	"go.lumeweb.com/libs5-go/encoding"
 )
 
 type FileVersionThumbnail struct {

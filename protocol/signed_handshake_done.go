@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/LumeWeb/libs5-go/types"
-	"github.com/LumeWeb/libs5-go/utils"
 	"github.com/vmihailenco/msgpack/v5"
+	"go.lumeweb.com/libs5-go/types"
+	"go.lumeweb.com/libs5-go/utils"
 	"net/url"
 )
 

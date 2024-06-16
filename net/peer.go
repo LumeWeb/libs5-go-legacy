@@ -1,7 +1,7 @@
 package net
 
 import (
-	"github.com/LumeWeb/libs5-go/encoding"
+	"go.lumeweb.com/libs5-go/encoding"
 	"go.uber.org/zap"
 	"net"
 	"net/url"

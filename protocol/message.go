@@ -1,7 +1,7 @@
 package protocol
 
 import (
-	"github.com/LumeWeb/libs5-go/types"
+	"go.lumeweb.com/libs5-go/types"
 )
 
 var (

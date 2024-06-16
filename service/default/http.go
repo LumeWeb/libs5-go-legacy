@@ -2,10 +2,10 @@ package _default
 
 import (
 	"context"
-	"github.com/LumeWeb/httputil"
-	"github.com/LumeWeb/libs5-go/build"
-	s5net "github.com/LumeWeb/libs5-go/net"
-	"github.com/LumeWeb/libs5-go/service"
+	"go.lumeweb.com/httputil"
+	"go.lumeweb.com/libs5-go/build"
+	s5net "go.lumeweb.com/libs5-go/net"
+	"go.lumeweb.com/libs5-go/service"
 	"go.uber.org/zap"
 	"net"
 	"net/http"

@@ -2,12 +2,12 @@ package node
 
 import (
 	"context"
-	"github.com/LumeWeb/libs5-go/config"
-	"github.com/LumeWeb/libs5-go/db"
-	"github.com/LumeWeb/libs5-go/encoding"
-	"github.com/LumeWeb/libs5-go/protocol"
-	"github.com/LumeWeb/libs5-go/service"
-	_default "github.com/LumeWeb/libs5-go/service/default"
+	"go.lumeweb.com/libs5-go/config"
+	"go.lumeweb.com/libs5-go/db"
+	"go.lumeweb.com/libs5-go/encoding"
+	"go.lumeweb.com/libs5-go/protocol"
+	"go.lumeweb.com/libs5-go/service"
+	_default "go.lumeweb.com/libs5-go/service/default"
 	"go.uber.org/zap"
 )
 

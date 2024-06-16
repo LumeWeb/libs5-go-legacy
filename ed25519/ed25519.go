@@ -2,8 +2,8 @@ package ed25519
 
 import (
 	"crypto/ed25519"
-	"github.com/LumeWeb/libs5-go/types"
-	"github.com/LumeWeb/libs5-go/utils"
+	"go.lumeweb.com/libs5-go/types"
+	"go.lumeweb.com/libs5-go/utils"
 )
 
 type KeyPairEd25519 struct {
