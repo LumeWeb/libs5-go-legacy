@@ -15,7 +15,7 @@ require (
 	github.com/samber/lo v1.45.0
 	github.com/stretchr/testify v1.8.4
 	github.com/vmihailenco/msgpack/v5 v5.4.1
-	go.etcd.io/bbolt v1.3.8
+	go.etcd.io/bbolt v1.3.11
 	go.etcd.io/etcd/client/v3 v3.5.14
 	go.lumeweb.com/httputil v0.0.0-20240616192644-3d270a528d86
 	go.uber.org/zap v1.26.0
