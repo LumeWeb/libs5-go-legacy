@@ -13,7 +13,7 @@ require (
 	github.com/multiformats/go-multibase v0.2.0
 	github.com/olebedev/emitter v0.0.0-20230411050614-349169dec2ba
 	github.com/samber/lo v1.45.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.10.0
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	go.etcd.io/bbolt v1.3.8
 	go.etcd.io/etcd/client/v3 v3.5.14
