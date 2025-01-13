@@ -20,7 +20,7 @@ require (
 	go.lumeweb.com/httputil v0.0.0-20240616192644-3d270a528d86
 	go.uber.org/zap v1.26.0
 	lukechampine.com/blake3 v1.2.1
-	nhooyr.io/websocket v1.7.1
+	nhooyr.io/websocket v1.8.17
 )
 
 require (
@@ -41,7 +41,6 @@ require (
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
-	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/genproto v0.0.0-20230822172742-b8732ec3820d // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230822172742-b8732ec3820d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
