@@ -2,7 +2,9 @@ package transport
 
 import (
 	"context"
+	"crypto"
 	"go.lumeweb.com/libs5-go/old/encoding"
+	libcrypto "go.lumeweb.com/libs5-go/pkg/crypto"
 	"net/url"
 	"sync"
 	"time"
@@ -37,11 +39,11 @@ type Manager interface {
 
 // DefaultManager implements the Manager interface
 type DefaultManager struct {
-	peers        map[string]Peer        // All peers by ID
-	peersByURI   map[string]Peer        // Peers indexed by URI
-	nodeID       *encoding.NodeId       // This node's ID
-	keyPair      *crypto.KeyPairEd25519 // This node's keypair
-	transports   map[string]PeerFactory // Available transport types
+	peers        map[string]Peer           // All peers by ID
+	peersByURI   map[string]Peer           // Peers indexed by URI
+	nodeID       *encoding.NodeId          // This node's ID
+	keyPair      *libcrypto.KeyPairEd25519 // This node's keypair
+	transports   map[string]PeerFactory    // Available transport types
 	logger       *zap.Logger
 	mutex        sync.RWMutex
 	challengeGen func() []byte // Challenge generator function
@@ -50,7 +52,7 @@ type DefaultManager struct {
 type ManagerOption func(*DefaultManager)
 
 // NewManager creates a transport manager with the given options
-func NewManager(keyPair *crypto.KeyPairEd25519, logger *zap.Logger, options ...ManagerOption) Manager {
+func NewManager(keyPair *libcrypto.KeyPairEd25519, logger *zap.Logger, options ...ManagerOption) Manager {
 	nodeID := encoding.NewNodeId(keyPair.PublicKey())
 
 	m := &DefaultManager{
