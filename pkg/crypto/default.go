@@ -3,14 +3,13 @@ package crypto
 import (
 	"context"
 	"crypto/ed25519"
-	"crypto/subtle"
 	"errors"
 	"fmt"
+	libs5_go "go.lumeweb.com/libs5-go"
 	"io"
-	"os"
 	"sync"
 
-	"github.com/zeebo/blake3"
+	"github.com/lukechampine/blake3"
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
@@ -26,7 +25,7 @@ func NewDefaultCrypto() *DefaultCryptoImplementation {
 func (d *DefaultCryptoImplementation) GenerateSecureRandomBytes(length int) ([]byte, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	
+
 	buf := make([]byte, length)
 	_, err := rand.Read(buf)
 	if err != nil {
@@ -58,10 +57,10 @@ func (d *DefaultCryptoImplementation) HashBlake3Sync(input []byte) ([]byte, erro
 	return hash.Sum(nil), nil
 }
 
-func (d *DefaultCryptoImplementation) HashBlake3File(ctx context.Context, size int64, openRead OpenReadFunction) ([]byte, error) {
+func (d *DefaultCryptoImplementation) HashBlake3File(ctx context.Context, size int64, openRead libs5_go.OpenReadFunction) ([]byte, error) {
 	hash := blake3.New()
-	
-	for offset := int64(0); offset < size; offset += 1<<20 { // 1MB chunks
+
+	for offset := int64(0); offset < size; offset += 1 << 20 { // 1MB chunks
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
@@ -79,7 +78,7 @@ func (d *DefaultCryptoImplementation) HashBlake3File(ctx context.Context, size i
 			}
 		}
 	}
-	
+
 	return hash.Sum(nil), nil
 }
 
@@ -115,7 +114,7 @@ func (d *DefaultCryptoImplementation) NewKeyPairEd25519(ctx context.Context, see
 		if len(seed) != ed25519.SeedSize {
 			return KeyPairEd25519{}, errors.New("invalid seed length")
 		}
-		
+
 		privateKey := ed25519.NewKeyFromSeed(seed)
 		return KeyPairEd25519{
 			PublicKey:  privateKey[32:],
@@ -132,12 +131,12 @@ func (d *DefaultCryptoImplementation) EncryptXChaCha20Poly1305(ctx context.Conte
 		if len(nonce) != chacha20poly1305.NonceSizeX {
 			return nil, errors.New("invalid nonce size")
 		}
-		
+
 		aead, err := chacha20poly1305.NewX(key)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create AEAD: %w", err)
 		}
-		
+
 		return aead.Seal(nil, nonce, plaintext, nil), nil
 	}
 }
@@ -150,12 +149,12 @@ func (d *DefaultCryptoImplementation) DecryptXChaCha20Poly1305(ctx context.Conte
 		if len(nonce) != chacha20poly1305.NonceSizeX {
 			return nil, errors.New("invalid nonce size")
 		}
-		
+
 		aead, err := chacha20poly1305.NewX(key)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create AEAD: %w", err)
 		}
-		
+
 		return aead.Open(nil, nonce, ciphertext, nil)
 	}
 }
