@@ -24,9 +24,9 @@ type ErrorCallback func(args ...interface{})
 
 // ListenerOptions contains options for message listeners
 type ListenerOptions struct {
-	OnClose *CloseCallback
-	OnError *ErrorCallback
-	Logger  *zap.Logger
+	OnClose CloseCallback // Function type directly, not a pointer
+	OnError ErrorCallback // Function type directly, not a pointer
+	Logger  *zap.Logger   // Logger remains a pointer as is standard
 }
 
 // TransportPeerConfig contains configuration for new peers

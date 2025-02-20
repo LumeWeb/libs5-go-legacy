@@ -2,9 +2,8 @@ package transport
 
 import (
 	"context"
-	"crypto"
-	"go.lumeweb.com/libs5-go/old/encoding"
 	libcrypto "go.lumeweb.com/libs5-go/pkg/crypto"
+	"go.lumeweb.com/libs5-go/pkg/encoding"
 	"net/url"
 	"sync"
 	"time"
@@ -47,12 +46,13 @@ type DefaultManager struct {
 	logger       *zap.Logger
 	mutex        sync.RWMutex
 	challengeGen func() []byte // Challenge generator function
+	crypto       libcrypto.CryptoImplementation
 }
 
 type ManagerOption func(*DefaultManager)
 
 // NewManager creates a transport manager with the given options
-func NewManager(keyPair *libcrypto.KeyPairEd25519, logger *zap.Logger, options ...ManagerOption) Manager {
+func NewManager(keyPair *libcrypto.KeyPairEd25519, crypto libcrypto.CryptoImplementation, logger *zap.Logger, options ...ManagerOption) Manager {
 	nodeID := encoding.NewNodeId(keyPair.PublicKey())
 
 	m := &DefaultManager{
@@ -62,11 +62,11 @@ func NewManager(keyPair *libcrypto.KeyPairEd25519, logger *zap.Logger, options .
 		keyPair:    keyPair,
 		transports: make(map[string]PeerFactory),
 		logger:     logger,
+		crypto:     crypto,
 		challengeGen: func() []byte {
 			challenge := make([]byte, 64)
 			// Generate random challenge and embed public key
-			// similar to JS implementation
-			crypto.GenerateSecureRandomBytes(challenge)
+			crypto.GenerateSecureRandomBytes(64, challenge)
 			copy(challenge[31:], keyPair.PublicKeyRaw())
 			return challenge
 		},
@@ -98,7 +98,7 @@ func WithTransport(scheme string, factory PeerFactory) ManagerOption {
 	}
 }
 
-func (m *DefaultManager) Connect(ctx context.Context, uri *url.URL) (Peer, error) {
+func (m *DefaultManager) Connect(_ context.Context, uri *url.URL) (Peer, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -148,12 +148,20 @@ func (m *DefaultManager) Connect(ctx context.Context, uri *url.URL) (Peer, error
 }
 
 func (m *DefaultManager) setupMessageHandler(peer Peer) {
-	// Set up listener options
-	onClose := func() {
+	// Define closure functions for callbacks
+	onCloseFn := func() {
 		m.handlePeerDisconnect(peer)
 	}
-	onError := func(args ...interface{}) {
+
+	onErrorFn := func(args ...interface{}) {
 		m.logger.Error("Peer error", zap.Any("error", args), zap.String("peer", peer.GetIPString()))
+	}
+
+	// Create the listener options with our callback functions
+	options := ListenerOptions{
+		OnClose: onCloseFn,
+		OnError: onErrorFn,
+		Logger:  m.logger,
 	}
 
 	// Start listening for messages
@@ -162,11 +170,7 @@ func (m *DefaultManager) setupMessageHandler(peer Peer) {
 			// Message handling logic (will be moved to protocol layer)
 			return nil
 		},
-		ListenerOptions{
-			OnClose: &onClose,
-			OnError: &onError,
-			Logger:  m.logger,
-		},
+		options,
 	)
 }
 
