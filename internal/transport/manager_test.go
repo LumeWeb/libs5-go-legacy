@@ -2,17 +2,14 @@ package transport_test
 
 import (
 	"context"
-	"net/url"
-	"testing"
-	"time"
-
 	"go.lumeweb.com/libs5-go/internal/transport"
 	"go.lumeweb.com/libs5-go/pkg/crypto"
-	"go.lumeweb.com/libs5-go/pkg/encoding"
 	"go.uber.org/zap"
+	"net/url"
+	"testing"
 )
 
-func createTestManager(t *testing.T) transport.Manager {
+func createTestManager(_ *testing.T) transport.Manager {
 	kp, _ := crypto.GenerateEd25519Key()
 	logger, _ := zap.NewDevelopment()
 	return transport.NewManager(kp, crypto.DefaultCrypto(), logger)
