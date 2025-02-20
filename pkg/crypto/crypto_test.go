@@ -170,31 +170,31 @@ func TestHashBlake3File(t *testing.T) {
 		name     string
 		size     int64
 		data     []byte
-		expected []byte // Replace with actual BLAKE3 hashes
+		expected []byte
 	}{
 		{
 			name:     "empty file",
 			size:     0,
 			data:     []byte{},
-			expected: mustDecodeHex("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+			expected: mustDecodeHex("af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"),
 		},
 		{
 			name:     "1KB file",
 			size:     1024,
 			data:     bytes.Repeat([]byte("test-pattern-123"), 1024/len("test-pattern-123")+1)[:1024],
-			expected: mustDecodeHex("f400267ceb96cbbc0aacab1302f3646f9263c7c346532edb4ad259485fd2a75c"),
+			expected: mustDecodeHex("dcdb572e9ad75fe9c88520493818eecba5d16b8deec775ae5e67f60fbb993ae6"),
 		},
 		{
 			name:     "1MB file",
 			size:     1024 * 1024,
 			data:     bytes.Repeat([]byte("test-pattern-456"), 1024*1024/len("test-pattern-456")+1)[:1024*1024],
-			expected: mustDecodeHex("e431a24d35079ad68c26c793de2769aada4f6e096cc76d2b9e11b3a898a6c04c"),
+			expected: mustDecodeHex("755bd5d9ba88d80f2f0278517172329e84dc01ca36182f49490d677e96f4533b"),
 		},
 		{
 			name:     "2MB file",
 			size:     2 * 1024 * 1024,
 			data:     bytes.Repeat([]byte("test-pattern-789"), 2*1024*1024/len("test-pattern-789")+1)[:2*1024*1024],
-			expected: mustDecodeHex("f63560e1ae5256836977fcc835c32a6914b4ae71ae9c91ff59fd285746b0013c"),
+			expected: mustDecodeHex("9abf6dd0241d918002334087503a65946907b17d69c69462c673ebe5894e879e"),
 		},
 	}
 
@@ -231,6 +231,20 @@ func TestHashBlake3File(t *testing.T) {
 		_, err := crypto.HashBlake3File(ctx, 1024, openRead)
 		if err == nil {
 			t.Error("Expected error from invalid reader")
+		}
+	})
+
+	t.Run("context cancellation", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		openRead := func(start, end int) (io.Reader, error) {
+			return bytes.NewReader([]byte("test")), nil
+		}
+
+		_, err := crypto.HashBlake3File(ctx, 4, openRead)
+		if err != context.Canceled {
+			t.Errorf("Expected context canceled error, got %v", err)
 		}
 	})
 }
