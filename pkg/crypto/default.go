@@ -11,12 +11,15 @@ import (
 
 	"golang.org/x/crypto/chacha20poly1305"
 	"lukechampine.com/blake3"
+	"lukechampine.com/frand"
 )
 
 // DefaultCryptoImplementation provides production-ready crypto operations
 type DefaultCryptoImplementation struct {
 	mu sync.Mutex
 }
+
+const mbChunk = 1 << 20
 
 func NewDefaultCrypto() *DefaultCryptoImplementation {
 	return &DefaultCryptoImplementation{}
@@ -27,50 +30,53 @@ func (d *DefaultCryptoImplementation) GenerateSecureRandomBytes(length int) ([]b
 	defer d.mu.Unlock()
 
 	buf := make([]byte, length)
-	_, err := rand.Read(buf)
+	_, err := frand.Read(buf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate random bytes: %w", err)
 	}
 	return buf, nil
 }
 
+// HashBlake3 computes a BLAKE3 hash and truncates to 256 bits
 func (d *DefaultCryptoImplementation) HashBlake3(ctx context.Context, input []byte) ([]byte, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		hash := blake3.New()
+		hash := blake3.New(64, nil)
 		_, err := hash.Write(input)
 		if err != nil {
 			return nil, fmt.Errorf("blake3 hash failed: %w", err)
 		}
-		return hash.Sum(nil), nil
+		fullHash := hash.Sum(nil)
+		// Truncate to 256 bits (32 bytes) following reference implementation pattern
+		return fullHash[:32], nil
 	}
 }
 
+// HashBlake3Sync calls the async version with a background context
 func (d *DefaultCryptoImplementation) HashBlake3Sync(input []byte) ([]byte, error) {
-	hash := blake3.New()
-	_, err := hash.Write(input)
-	if err != nil {
-		return nil, fmt.Errorf("blake3 hash failed: %w", err)
-	}
-	return hash.Sum(nil), nil
+	// Create a background context that will never be canceled
+	ctx := context.Background()
+
+	// Call the async method which handles the truncation
+	return d.HashBlake3(ctx, input)
 }
 
 func (d *DefaultCryptoImplementation) HashBlake3File(ctx context.Context, size int64, openRead libs5_go.OpenReadFunction) ([]byte, error) {
-	hash := blake3.New()
+	hash := blake3.New(64, nil)
 
-	for offset := int64(0); offset < size; offset += 1 << 20 { // 1MB chunks
+	for offset := int64(0); offset < size; offset += mbChunk { // 1MB chunks
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		default:
-			reader, err := openRead(offset, offset+1<<20)
+			reader, err := openRead(int(offset), mbChunk)
 			if err != nil {
 				return nil, fmt.Errorf("failed to open read at offset %d: %w", offset, err)
 			}
 
-			_, err = io.CopyN(hash, reader, 1<<20)
+			_, err = io.CopyN(hash, reader, mbChunk)
 			if errors.Is(err, io.EOF) {
 				break
 			} else if err != nil {
@@ -79,7 +85,9 @@ func (d *DefaultCryptoImplementation) HashBlake3File(ctx context.Context, size i
 		}
 	}
 
-	return hash.Sum(nil), nil
+	fullHash := hash.Sum(nil)
+	// Truncate to 256 bits (32 bytes) following reference implementation pattern
+	return fullHash[:32], nil
 }
 
 func (d *DefaultCryptoImplementation) VerifyEd25519(ctx context.Context, publicKey, message, signature []byte) (bool, error) {

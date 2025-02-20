@@ -1,8 +1,8 @@
 module go.lumeweb.com/libs5-go
 
-go 1.22
+go 1.23.1
 
-toolchain go1.22.1
+toolchain go1.23.6
 
 require (
 	github.com/multiformats/go-multibase v0.2.0
@@ -10,6 +10,7 @@ require (
 	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.14.0
 	lukechampine.com/blake3 v1.2.1
+	lukechampine.com/frand v1.5.1
 	nhooyr.io/websocket v1.7.1
 )
 
