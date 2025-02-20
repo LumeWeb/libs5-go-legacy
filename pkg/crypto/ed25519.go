@@ -4,6 +4,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"go.lumeweb.com/libs5-go/pkg/bytes"
+	"lukechampine.com/frand"
 )
 
 type KeyPairEd25519 struct {
@@ -36,7 +37,7 @@ func New(bytes []byte) *KeyPairEd25519 {
 }
 
 func (kp *KeyPairEd25519) PublicKey() []byte {
-	return bytes.ConcatBytes([]byte{byte(types.HashTypeEd25519)}, kp.PublicKeyRaw())
+	return bytes.ConcatBytes([]byte{byte(HashTypeEd25519)}, kp.PublicKeyRaw())
 }
 
 func (kp *KeyPairEd25519) PublicKeyRaw() []byte {

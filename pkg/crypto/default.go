@@ -107,7 +107,7 @@ func (d *DefaultCryptoImplementation) SignEd25519(ctx context.Context, keyPair K
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		if len(keyPair.PrivateKey) != ed25519.PrivateKeySize {
+		if len(keyPair.ExtractBytes()) != ed25519.PrivateKeySize {
 			return nil, errors.New("invalid private key length")
 		}
 		return ed25519.Sign(keyPair.PrivateKey, message), nil
