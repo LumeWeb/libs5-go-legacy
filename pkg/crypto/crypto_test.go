@@ -106,42 +106,60 @@ func TestHashBlake3(t *testing.T) {
 	ctx := context.Background()
 
 	testCases := []struct {
-		name  string
-		input []byte
-		// Note: These are SHA-256 hashes since we couldn't generate BLAKE3 in JS,
-		// but they demonstrate the structure. Replace with actual BLAKE3 hashes.
-		expectedHash string
+		name     string
+		input    []byte
+		expected []byte
 	}{
 		{
-			name:         "empty string",
-			input:        []byte(""),
-			expectedHash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+			name:     "empty string",
+			input:    []byte(""),
+			expected: mustDecodeHex("af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"),
 		},
 		{
-			name:         "hello world",
-			input:        []byte("hello world"),
-			expectedHash: "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9",
+			name:     "hello world",
+			input:    []byte("hello world"),
+			expected: mustDecodeHex("d74981efa70a0c880b8d8c1985d075dbcbf679b99a5f9914e5aaf96b831a9e24"),
 		},
 		{
-			name:         "1KB string",
-			input:        bytes.Repeat([]byte("A"), 1024),
-			expectedHash: "c8cd55c4c6374e72d3a52197809e8410fd0573635444b2e489e83cdc924ed384",
+			name:     "1KB string",
+			input:    bytes.Repeat([]byte("A"), 1024),
+			expected: mustDecodeHex("f7314bcd4f08b945da46890d4abcbe9bd78905369461379ed5ab893eaccff236"),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// Test async version
 			hash, err := crypto.HashBlake3(ctx, tc.input)
 			if err != nil {
 				t.Fatalf("HashBlake3 failed: %v", err)
 			}
+			if !bytes.Equal(hash, tc.expected) {
+				t.Errorf("Hash mismatch for %s:\nwant: %x\ngot:  %x",
+					tc.name, tc.expected, hash)
+			}
 
-			if hexHash := hex.EncodeToString(hash); hexHash != tc.expectedHash {
-				t.Errorf("Hash mismatch for %s:\nwant: %s\ngot:  %s",
-					tc.name, tc.expectedHash, hexHash)
+			// Test sync version
+			syncHash, err := crypto.HashBlake3Sync(tc.input)
+			if err != nil {
+				t.Fatalf("HashBlake3Sync failed: %v", err)
+			}
+			if !bytes.Equal(syncHash, tc.expected) {
+				t.Errorf("HashBlake3Sync mismatch for %s:\nwant: %x\ngot:  %x",
+					tc.name, tc.expected, syncHash)
 			}
 		})
 	}
+
+	t.Run("context cancellation", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		_, err := crypto.HashBlake3(ctx, []byte("test"))
+		if err != context.Canceled {
+			t.Errorf("Expected context canceled error, got %v", err)
+		}
+	})
 }
 
 func TestHashBlake3File(t *testing.T) {
