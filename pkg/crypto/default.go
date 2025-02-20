@@ -110,24 +110,20 @@ func (d *DefaultCryptoImplementation) SignEd25519(ctx context.Context, keyPair K
 		if len(keyPair.ExtractBytes()) != ed25519.PrivateKeySize {
 			return nil, errors.New("invalid private key length")
 		}
-		return ed25519.Sign(keyPair.PrivateKey, message), nil
+		return ed25519.Sign(keyPair.ExtractBytes(), message), nil
 	}
 }
 
-func (d *DefaultCryptoImplementation) NewKeyPairEd25519(ctx context.Context, seed []byte) (KeyPairEd25519, error) {
+func (d *DefaultCryptoImplementation) NewKeyPairEd25519(ctx context.Context, seed []byte) (*KeyPairEd25519, error) {
 	select {
 	case <-ctx.Done():
-		return KeyPairEd25519{}, ctx.Err()
+		return nil, ctx.Err()
 	default:
 		if len(seed) != ed25519.SeedSize {
-			return KeyPairEd25519{}, errors.New("invalid seed length")
+			return nil, errors.New("invalid seed length")
 		}
 
-		privateKey := ed25519.NewKeyFromSeed(seed)
-		return KeyPairEd25519{
-			PublicKey:  privateKey[32:],
-			PrivateKey: privateKey,
-		}, nil
+		return NewKeyFromSeed(seed), nil
 	}
 }
 

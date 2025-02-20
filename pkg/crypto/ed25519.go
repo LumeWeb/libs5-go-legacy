@@ -36,6 +36,12 @@ func New(bytes []byte) *KeyPairEd25519 {
 	return &KeyPairEd25519{Bytes: bytes}
 }
 
+func NewKeyFromSeed(seed []byte) *KeyPairEd25519 {
+	privateKey := ed25519.NewKeyFromSeed(seed)
+
+	return New(privateKey)
+}
+
 func (kp *KeyPairEd25519) PublicKey() []byte {
 	return bytes.ConcatBytes([]byte{byte(HashTypeEd25519)}, kp.PublicKeyRaw())
 }
