@@ -6,9 +6,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	libcrypto "go.lumeweb.com/libs5-go/pkg/crypto"
-	"golang.org/x/crypto/chacha20poly1305"
 	"golang.org/x/crypto/ed25519"
 	"io"
+	"sync"
 	"testing"
 )
 
@@ -275,45 +275,134 @@ func TestXChaCha20Poly1305(t *testing.T) {
 	crypto := libcrypto.NewDefaultCrypto()
 	ctx := context.Background()
 
-	key := make([]byte, chacha20poly1305.KeySize)
-	nonce := make([]byte, chacha20poly1305.NonceSizeX)
-	plaintext := []byte("secret message")
+	// Use deterministic test vectors
+	key := mustDecodeHex("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20")
+	nonce := mustDecodeHex("6465666768696a6b6c6d6e6f707172737475767778797a7b")
 
-	t.Run("encrypt/decrypt roundtrip", func(t *testing.T) {
-		ciphertext, err := crypto.EncryptXChaCha20Poly1305(ctx, key, nonce, plaintext)
-		if err != nil {
-			t.Fatalf("Encryption failed: %v", err)
-		}
+	testCases := []struct {
+		name      string
+		plaintext []byte
+	}{
+		{
+			name:      "empty message",
+			plaintext: []byte(""),
+		},
+		{
+			name:      "short message",
+			plaintext: []byte("Hello, XChaCha20!"),
+		},
+		{
+			name:      "32-byte message",
+			plaintext: bytes.Repeat([]byte("A"), 32),
+		},
+		{
+			name:      "64-byte message",
+			plaintext: bytes.Repeat([]byte("B"), 64),
+		},
+		{
+			name:      "json message",
+			plaintext: []byte(`{"user":"alice","timestamp":1234567890}`),
+		},
+	}
 
-		decrypted, err := crypto.DecryptXChaCha20Poly1305(ctx, key, nonce, ciphertext)
-		if err != nil {
-			t.Fatalf("Decryption failed: %v", err)
-		}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Test encryption
+			ciphertext, err := crypto.EncryptXChaCha20Poly1305(ctx, key, nonce, tc.plaintext)
+			if err != nil {
+				t.Fatalf("Encryption failed: %v", err)
+			}
 
-		if !bytes.Equal(decrypted, plaintext) {
-			t.Errorf("Decrypted text mismatch: want %q, got %q", plaintext, decrypted)
-		}
-	})
+			// Test decryption
+			decrypted, err := crypto.DecryptXChaCha20Poly1305(ctx, key, nonce, ciphertext)
+			if err != nil {
+				t.Fatalf("Decryption failed: %v", err)
+			}
 
-	t.Run("tampered ciphertext", func(t *testing.T) {
-		ciphertext, _ := crypto.EncryptXChaCha20Poly1305(ctx, key, nonce, plaintext)
-		ciphertext[0] ^= 0x01 // Flip first bit
+			// Verify roundtrip
+			if !bytes.Equal(decrypted, tc.plaintext) {
+				t.Errorf("Decrypted text doesn't match original:\nwant: %x\ngot:  %x",
+					tc.plaintext, decrypted)
+			}
 
-		_, err := crypto.DecryptXChaCha20Poly1305(ctx, key, nonce, ciphertext)
-		if err == nil {
-			t.Error("Expected error for tampered ciphertext")
-		}
-	})
+			// Test tampering detection
+			if len(ciphertext) > 0 {
+				tampered := make([]byte, len(ciphertext))
+				copy(tampered, ciphertext)
+				tampered[0] ^= 0x01 // Flip one bit
 
-	t.Run("invalid key/nonce sizes", func(t *testing.T) {
-		_, err := crypto.EncryptXChaCha20Poly1305(ctx, []byte("short"), nonce, plaintext)
+				_, err = crypto.DecryptXChaCha20Poly1305(ctx, key, nonce, tampered)
+				if err == nil {
+					t.Error("Expected error for tampered ciphertext")
+				}
+			}
+		})
+	}
+
+	t.Run("invalid key size", func(t *testing.T) {
+		invalidKey := make([]byte, 31) // Too short
+		_, err := crypto.EncryptXChaCha20Poly1305(ctx, invalidKey, nonce, []byte("test"))
 		if err == nil {
 			t.Error("Expected error for invalid key size")
 		}
+	})
 
-		_, err = crypto.EncryptXChaCha20Poly1305(ctx, key, []byte("short"), plaintext)
+	t.Run("invalid nonce size", func(t *testing.T) {
+		invalidNonce := make([]byte, 23) // Too short
+		_, err := crypto.EncryptXChaCha20Poly1305(ctx, key, invalidNonce, []byte("test"))
 		if err == nil {
 			t.Error("Expected error for invalid nonce size")
+		}
+	})
+
+	t.Run("concurrent encryption", func(t *testing.T) {
+		const concurrency = 10
+		var wg sync.WaitGroup
+		wg.Add(concurrency)
+
+		for i := 0; i < concurrency; i++ {
+			go func(i int) {
+				defer wg.Done()
+
+				// Use different nonces for each goroutine
+				localNonce := make([]byte, len(nonce))
+				copy(localNonce, nonce)
+				localNonce[0] = byte(i) // Make nonce unique per goroutine
+
+				msg := []byte(fmt.Sprintf("concurrent test %d", i))
+				ciphertext, err := crypto.EncryptXChaCha20Poly1305(ctx, key, localNonce, msg)
+				if err != nil {
+					t.Errorf("Concurrent encryption %d failed: %v", i, err)
+					return
+				}
+
+				decrypted, err := crypto.DecryptXChaCha20Poly1305(ctx, key, localNonce, ciphertext)
+				if err != nil {
+					t.Errorf("Concurrent decryption %d failed: %v", i, err)
+					return
+				}
+
+				if !bytes.Equal(decrypted, msg) {
+					t.Errorf("Concurrent test %d: decrypted text doesn't match original", i)
+				}
+			}(i)
+		}
+
+		wg.Wait()
+	})
+
+	t.Run("context cancellation", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		_, err := crypto.EncryptXChaCha20Poly1305(ctx, key, nonce, []byte("test"))
+		if err != context.Canceled {
+			t.Errorf("Expected context canceled error, got %v", err)
+		}
+
+		_, err = crypto.DecryptXChaCha20Poly1305(ctx, key, nonce, []byte("test"))
+		if err != context.Canceled {
+			t.Errorf("Expected context canceled error, got %v", err)
 		}
 	})
 }
