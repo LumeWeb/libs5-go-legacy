@@ -3,10 +3,9 @@ package crypto_test
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"fmt"
 	libcrypto "go.lumeweb.com/libs5-go/pkg/crypto"
-	"golang.org/x/crypto/ed25519"
+	"go.lumeweb.com/libs5-go/pkg/crypto/internal/test"
 	"io"
 	"math"
 	"sync"
@@ -113,17 +112,17 @@ func TestHashBlake3(t *testing.T) {
 		{
 			name:     "empty string",
 			input:    []byte(""),
-			expected: mustDecodeHex("af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"),
+			expected: test.MustDecodeHex("af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"),
 		},
 		{
 			name:     "hello world",
 			input:    []byte("hello world"),
-			expected: mustDecodeHex("d74981efa70a0c880b8d8c1985d075dbcbf679b99a5f9914e5aaf96b831a9e24"),
+			expected: test.MustDecodeHex("d74981efa70a0c880b8d8c1985d075dbcbf679b99a5f9914e5aaf96b831a9e24"),
 		},
 		{
 			name:     "1KB string",
 			input:    bytes.Repeat([]byte("A"), 1024),
-			expected: mustDecodeHex("f7314bcd4f08b945da46890d4abcbe9bd78905369461379ed5ab893eaccff236"),
+			expected: test.MustDecodeHex("f7314bcd4f08b945da46890d4abcbe9bd78905369461379ed5ab893eaccff236"),
 		},
 	}
 
@@ -176,25 +175,25 @@ func TestHashBlake3File(t *testing.T) {
 			name:     "empty file",
 			size:     0,
 			data:     []byte{},
-			expected: mustDecodeHex("af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"),
+			expected: test.MustDecodeHex("af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"),
 		},
 		{
 			name:     "1KB file",
 			size:     1024,
 			data:     bytes.Repeat([]byte("test-pattern-123"), 1024/len("test-pattern-123")+1)[:1024],
-			expected: mustDecodeHex("dcdb572e9ad75fe9c88520493818eecba5d16b8deec775ae5e67f60fbb993ae6"),
+			expected: test.MustDecodeHex("dcdb572e9ad75fe9c88520493818eecba5d16b8deec775ae5e67f60fbb993ae6"),
 		},
 		{
 			name:     "1MB file",
 			size:     1024 * 1024,
 			data:     bytes.Repeat([]byte("test-pattern-456"), 1024*1024/len("test-pattern-456")+1)[:1024*1024],
-			expected: mustDecodeHex("755bd5d9ba88d80f2f0278517172329e84dc01ca36182f49490d677e96f4533b"),
+			expected: test.MustDecodeHex("755bd5d9ba88d80f2f0278517172329e84dc01ca36182f49490d677e96f4533b"),
 		},
 		{
 			name:     "2MB file",
 			size:     2 * 1024 * 1024,
 			data:     bytes.Repeat([]byte("test-pattern-789"), 2*1024*1024/len("test-pattern-789")+1)[:2*1024*1024],
-			expected: mustDecodeHex("9abf6dd0241d918002334087503a65946907b17d69c69462c673ebe5894e879e"),
+			expected: test.MustDecodeHex("9abf6dd0241d918002334087503a65946907b17d69c69462c673ebe5894e879e"),
 		},
 	}
 
@@ -249,107 +248,13 @@ func TestHashBlake3File(t *testing.T) {
 	})
 }
 
-func TestEd25519Operations(t *testing.T) {
-	crypto := libcrypto.NewDefaultCrypto()
-	ctx := context.Background()
-
-	// Use a deterministic test seed
-	seed := mustDecodeHex("008a2a3ca07c46de4bf3f5e9eb79c8b3f31279f3ad0ab3ab40051a561f976c90")
-
-	t.Run("key generation and signing", func(t *testing.T) {
-		keyPair, err := crypto.NewKeyPairEd25519(ctx, seed)
-		if err != nil {
-			t.Fatalf("NewKeyPairEd25519 failed: %v", err)
-		}
-
-		testCases := []struct {
-			name    string
-			message []byte
-			// These signatures are from ECDSA P-256 (since Ed25519 wasn't available in browser)
-			// Replace with actual Ed25519 signatures in production
-			signature []byte
-		}{
-			{
-				name:      "empty message",
-				message:   []byte(""),
-				signature: mustDecodeHex("9cd1b3f61928156a5365102269f0dd1aaa164162218467ad988619452d65e2696e9cc0906ca7961237390096281856bbbc5b8fc39cfef26ff6e661f370900338"),
-			},
-			{
-				name:      "short message",
-				message:   []byte("Hello, Ed25519!"),
-				signature: mustDecodeHex("56976cbfbad2b1fe8b5b88e983c445ce66b2c33d290f527bd55ea96d1750c2d97b8028c70eec4693a0a53dda0e5fa691ee140aaa7bc3453e479dc366cf9bb35a"),
-			},
-			{
-				name:      "longer message",
-				message:   []byte("A longer message that should be signed with Ed25519"),
-				signature: mustDecodeHex("f95dd2be564789acb2450a886ed34812677f5d686e49015333cd6450297a23ba4e6495d6b4f83019f3de3dbc552444dd6927e8ddbf9fae5c9f954b7cf25f8b17"),
-			},
-			{
-				name:      "1KB message",
-				message:   bytes.Repeat([]byte("A"), 1024),
-				signature: mustDecodeHex("501cf7e377f4bafaeeed633e20d6a9e4c3f11f0c00a74ad126eed16a3f020c1124c33bdba5c4210ab1f636acfa477127d204be2fffff72b0886045b8e6523a21"),
-			},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				// Test signing
-				sig, err := crypto.SignEd25519(ctx, *keyPair, tc.message)
-				if err != nil {
-					t.Fatalf("SignEd25519 failed: %v", err)
-				}
-
-				// Test verification
-				valid, err := crypto.VerifyEd25519(ctx, keyPair.PublicKeyRaw(), tc.message, sig)
-				if err != nil {
-					t.Fatalf("VerifyEd25519 failed: %v", err)
-				}
-				if !valid {
-					t.Error("Signature verification failed")
-				}
-
-				// Test verification with tampered message
-				if len(tc.message) > 0 {
-					tamperedMsg := make([]byte, len(tc.message))
-					copy(tamperedMsg, tc.message)
-					tamperedMsg[0] ^= 0x01 // Flip one bit
-
-					valid, err = crypto.VerifyEd25519(ctx, keyPair.PublicKeyRaw(), tamperedMsg, sig)
-					if err != nil {
-						t.Fatalf("VerifyEd25519 with tampered message failed: %v", err)
-					}
-					if valid {
-						t.Error("Signature verified for tampered message")
-					}
-				}
-			})
-		}
-	})
-
-	t.Run("invalid key sizes", func(t *testing.T) {
-		// Test with invalid seed size
-		invalidSeed := make([]byte, ed25519.SeedSize-1)
-		_, err := crypto.NewKeyPairEd25519(ctx, invalidSeed)
-		if err == nil {
-			t.Error("Expected error for invalid seed size")
-		}
-
-		// Test with invalid private key
-		invalidKey := libcrypto.KeyPairEd25519{Bytes: make([]byte, 10)}
-		_, err = crypto.SignEd25519(ctx, invalidKey, []byte("test"))
-		if err == nil {
-			t.Error("Expected error for invalid private key size")
-		}
-	})
-}
-
 func TestXChaCha20Poly1305(t *testing.T) {
 	crypto := libcrypto.NewDefaultCrypto()
 	ctx := context.Background()
 
 	// Use deterministic test vectors
-	key := mustDecodeHex("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20")
-	nonce := mustDecodeHex("6465666768696a6b6c6d6e6f707172737475767778797a7b")
+	key := test.MustDecodeHex("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20")
+	nonce := test.MustDecodeHex("6465666768696a6b6c6d6e6f707172737475767778797a7b")
 
 	testCases := []struct {
 		name      string
@@ -477,13 +382,4 @@ func TestXChaCha20Poly1305(t *testing.T) {
 			t.Errorf("Expected context canceled error, got %v", err)
 		}
 	})
-}
-
-// mustDecodeHex is a helper function to decode hex strings for test vectors
-func mustDecodeHex(s string) []byte {
-	b, err := hex.DecodeString(s)
-	if err != nil {
-		panic("invalid test vector hex: " + s)
-	}
-	return b
 }
