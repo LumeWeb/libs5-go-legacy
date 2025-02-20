@@ -8,6 +8,7 @@ import (
 	libcrypto "go.lumeweb.com/libs5-go/pkg/crypto"
 	"golang.org/x/crypto/ed25519"
 	"io"
+	"math"
 	"sync"
 	"testing"
 )
@@ -15,48 +16,87 @@ import (
 func TestGenerateSecureRandomBytes(t *testing.T) {
 	crypto := libcrypto.NewDefaultCrypto()
 
-	// Test vectors for specific sizes
-	t.Run("specific sizes", func(t *testing.T) {
-		sizes := []int{16, 32, 64, 128}
-		for _, size := range sizes {
-			b, err := crypto.GenerateSecureRandomBytes(size)
-			if err != nil {
-				t.Fatalf("Unexpected error for size %d: %v", size, err)
-			}
-			if len(b) != size {
-				t.Errorf("Expected %d bytes, got %d", size, len(b))
-			}
+	t.Run("valid lengths", func(t *testing.T) {
+		testSizes := []int{1, 16, 32, 64, 1024, 1024 * 1024} // Test up to 1MB
+		for _, size := range testSizes {
+			t.Run(fmt.Sprintf("size_%d", size), func(t *testing.T) {
+				b, err := crypto.GenerateSecureRandomBytes(size)
+				if err != nil {
+					t.Fatalf("Unexpected error for size %d: %v", size, err)
+				}
+				if len(b) != size {
+					t.Errorf("Expected %d bytes, got %d", size, len(b))
+				}
+			})
 		}
 	})
 
-	// Test for uniqueness using real random values
-	t.Run("uniqueness test", func(t *testing.T) {
-		knownRandoms := []string{
-			"5f11b3f99fffa91841cfc4a5d955b672",                                 // 16 bytes
-			"c45edc738e3ddd9e8d82ea14cafaae3af5967df91ec47b6475165a28993d4992", // 32 bytes
+	t.Run("invalid lengths", func(t *testing.T) {
+		invalidSizes := []int{
+			-1,               // Negative
+			0,                // Zero
+			-1 * (1 << 31),   // MinInt32
+			math.MaxInt64,    // MaxInt64
+			10*1024*1024 + 1, // Just over max allowed
 		}
 
-		// Generate new random and ensure it's not in our known set
-		b, err := crypto.GenerateSecureRandomBytes(16)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		hexResult := hex.EncodeToString(b)
-		for _, known := range knownRandoms {
-			if hexResult == known {
-				t.Error("Generated random bytes matched a known value - this should be statistically impossible")
-			}
-		}
-	})
-
-	t.Run("invalid sizes", func(t *testing.T) {
-		invalidSizes := []int{0, -1, -32}
 		for _, size := range invalidSizes {
-			_, err := crypto.GenerateSecureRandomBytes(size)
-			if err == nil {
-				t.Errorf("Expected error for invalid size %d", size)
+			t.Run(fmt.Sprintf("size_%d", size), func(t *testing.T) {
+				_, err := crypto.GenerateSecureRandomBytes(size)
+				if err == nil {
+					t.Errorf("Expected error for invalid size %d", size)
+				}
+			})
+		}
+	})
+
+	t.Run("concurrency safety", func(t *testing.T) {
+		const (
+			numGoroutines   = 100
+			bytesPerRoutine = 32
+		)
+
+		var wg sync.WaitGroup
+		results := make(chan []byte, numGoroutines)
+		errors := make(chan error, numGoroutines)
+
+		for i := 0; i < numGoroutines; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				b, err := crypto.GenerateSecureRandomBytes(bytesPerRoutine)
+				if err != nil {
+					errors <- err
+					return
+				}
+				results <- b
+			}()
+		}
+
+		// Wait for all goroutines and close channels
+		go func() {
+			wg.Wait()
+			close(results)
+			close(errors)
+		}()
+
+		// Check for errors
+		for err := range errors {
+			t.Errorf("Goroutine error: %v", err)
+		}
+
+		// Check for duplicates
+		seen := make(map[string]bool)
+		for result := range results {
+			if len(result) != bytesPerRoutine {
+				t.Errorf("Expected %d bytes, got %d", bytesPerRoutine, len(result))
 			}
+
+			key := string(result)
+			if seen[key] {
+				t.Error("Duplicate random bytes generated")
+			}
+			seen[key] = true
 		}
 	})
 }

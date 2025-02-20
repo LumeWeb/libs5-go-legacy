@@ -20,12 +20,23 @@ type DefaultCryptoImplementation struct {
 }
 
 const mbChunk = 1 << 20
+const maxLength = 10 * 1024 * 1024
 
 func NewDefaultCrypto() *DefaultCryptoImplementation {
 	return &DefaultCryptoImplementation{}
 }
 
 func (d *DefaultCryptoImplementation) GenerateSecureRandomBytes(length int) ([]byte, error) {
+	if length <= 0 {
+		return nil, fmt.Errorf("invalid length: must be positive")
+	}
+
+	// Prevent integer overflow and unreasonable allocations
+	// 10MB is a reasonable upper limit for random bytes
+	if length > maxLength {
+		return nil, fmt.Errorf("length %d exceeds maximum allowed size of %d bytes", length, maxLength)
+	}
+
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
