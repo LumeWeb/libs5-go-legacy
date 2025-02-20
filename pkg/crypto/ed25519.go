@@ -3,7 +3,6 @@ package crypto
 import (
 	"crypto/ed25519"
 	"crypto/rand"
-	"go.lumeweb.com/libs5-go/old/types"
 	"go.lumeweb.com/libs5-go/pkg/bytes"
 )
 

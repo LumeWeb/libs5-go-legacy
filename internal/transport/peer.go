@@ -2,7 +2,7 @@ package transport
 
 import (
 	"errors"
-	"go.lumeweb.com/libs5-go/old/encoding"
+	"go.lumeweb.com/libs5-go/pkg/encoding"
 	"go.uber.org/zap"
 	"net"
 	"net/url"

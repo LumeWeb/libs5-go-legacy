@@ -9,8 +9,8 @@ import (
 	"io"
 	"sync"
 
-	"github.com/lukechampine/blake3"
 	"golang.org/x/crypto/chacha20poly1305"
+	"lukechampine.com/blake3"
 )
 
 // DefaultCryptoImplementation provides production-ready crypto operations
