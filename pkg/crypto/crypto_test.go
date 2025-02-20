@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"io"
-	"testing"
-	"time"
-
 	libcrypto "go.lumeweb.com/libs5-go/pkg/crypto"
 	"golang.org/x/crypto/chacha20poly1305"
 	"golang.org/x/crypto/ed25519"
+	"io"
+	"testing"
 )
 
 func TestGenerateSecureRandomBytes(t *testing.T) {
