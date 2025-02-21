@@ -2,14 +2,17 @@ package protocol
 
 import (
 	"github.com/vmihailenco/msgpack/v5"
+	bases "go.lumeweb.com/libs5-go/pkg/internal"
+	"go.lumeweb.com/libs5-go/pkg/registry"
 	"go.uber.org/zap"
+	"old/types"
 )
 
 var _ IncomingMessage = (*RegistryEntryRequest)(nil)
 var _ EncodeableMessage = (*RegistryEntryRequest)(nil)
 
 type RegistryEntryRequest struct {
-	sre SignedRegistryEntry
+	sre registry.SignedRegistryEntry
 	HandshakeRequirement
 }
 
