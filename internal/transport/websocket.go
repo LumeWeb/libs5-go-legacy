@@ -87,7 +87,7 @@ func (p *WebSocketPeer) ListenForMessages(callback EventCallback, options Listen
 		if err != nil {
 			if websocket.CloseStatus(err) != websocket.StatusNormalClosure {
 				if options.OnError != nil {
-					(*options.OnError)(err)
+					options.OnError(err)
 				}
 			}
 			break
@@ -116,14 +116,14 @@ func (p *WebSocketPeer) ListenForMessages(callback EventCallback, options Listen
 		select {
 		case err := <-errChan:
 			if options.OnError != nil {
-				(*options.OnError)(err)
+				options.OnError(err)
 			}
 		default:
 		}
 	}
 
 	if options.OnClose != nil {
-		(*options.OnClose)()
+		options.OnClose()
 	}
 
 	// Close doneChan and wait for all goroutines to finish
@@ -134,7 +134,7 @@ func (p *WebSocketPeer) ListenForMessages(callback EventCallback, options Listen
 	close(errChan)
 	for err := range errChan {
 		if options.OnError != nil {
-			(*options.OnError)(err)
+			options.OnError(err)
 		}
 	}
 }

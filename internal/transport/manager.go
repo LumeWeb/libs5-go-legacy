@@ -2,7 +2,6 @@ package transport
 
 import (
 	"context"
-	libs5_go "go.lumeweb.com/libs5-go"
 	libcrypto "go.lumeweb.com/libs5-go/pkg/crypto"
 	"go.lumeweb.com/libs5-go/pkg/encoding"
 	"net/url"
@@ -47,13 +46,13 @@ type DefaultManager struct {
 	logger       *zap.Logger
 	mutex        sync.RWMutex
 	challengeGen func() []byte // Challenge generator function
-	crypto       libs5_go.CryptoImplementation
+	crypto       libcrypto.CryptoImplementation
 }
 
 type ManagerOption func(*DefaultManager)
 
 // NewManager creates a transport manager with the given options
-func NewManager(keyPair *libcrypto.KeyPairEd25519, crypto libs5_go.CryptoImplementation, logger *zap.Logger, options ...ManagerOption) Manager {
+func NewManager(keyPair *libcrypto.KeyPairEd25519, crypto libcrypto.CryptoImplementation, logger *zap.Logger, options ...ManagerOption) Manager {
 	nodeID := encoding.NewNodeId(keyPair.PublicKey())
 
 	m := &DefaultManager{
