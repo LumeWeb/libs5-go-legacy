@@ -10,7 +10,6 @@ import (
 	libbytes "go.lumeweb.com/libs5-go/pkg/bytes"
 	"go.lumeweb.com/libs5-go/pkg/crypto"
 	"go.lumeweb.com/libs5-go/pkg/internal"
-	"go.lumeweb.com/libs5-go/pkg/registry"
 )
 
 var (
@@ -85,8 +84,8 @@ func CIDFromRegistry(bytes []byte) (*CID, error) {
 		return nil, errEmptyBytes
 	}
 
-	registryType := registry.RegistryType(bytes[0])
-	if _, exists := registry.RegistryTypeMap[registryType]; !exists {
+	registryType := RegistryType(bytes[0])
+	if _, exists := RegistryTypeMap[registryType]; !exists {
 		return nil, fmt.Errorf("invalid registry type %d", bytes[0])
 	}
 
@@ -165,7 +164,7 @@ func (cid *CID) CopyWith(newType int, newSize uint64) (*CID, error) {
 }
 
 func (cid *CID) ToRegistryEntry() []byte {
-	registryType := registry.RegistryTypeCID
+	registryType := RegistryTypeCID
 	cidBytes := cid.ToBytes()
 	return libbytes.ConcatBytes([]byte{byte(registryType)}, cidBytes)
 }

@@ -1,4 +1,4 @@
-package registry
+package encoding
 
 type RegistryType int
 
