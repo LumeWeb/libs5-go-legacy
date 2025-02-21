@@ -1,4 +1,4 @@
-package p2p
+package node
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/crypto"
 	"go.lumeweb.com/libs5-go/pkg/http"
 	"go.lumeweb.com/libs5-go/pkg/kv"
+	p2p2 "go.lumeweb.com/libs5-go/pkg/p2p"
 	"go.lumeweb.com/libs5-go/pkg/protocol"
 	"go.lumeweb.com/libs5-go/pkg/registry"
 	"go.lumeweb.com/libs5-go/pkg/service"
@@ -16,7 +17,7 @@ import (
 // Node represents the main application node that coordinates all services
 type Node struct {
 	config   *config.NodeConfig
-	p2p      P2PService
+	p2p      p2p2.P2PService
 	registry registry.RegistryService
 	http     http.HTTPService
 	storage  storage.StorageService
@@ -40,7 +41,7 @@ func NewNode(params NodeParams) (*Node, error) {
 // NodeParams contains all dependencies needed to create a new Node
 type NodeParams struct {
 	Config   *config.NodeConfig
-	P2P      P2PService
+	P2P      p2p2.P2PService
 	Registry registry.RegistryService
 	HTTP     http.HTTPService
 	Storage  storage.StorageService
@@ -68,7 +69,7 @@ func (n *Node) Start(ctx context.Context) error {
 
 // DefaultNode creates a new Node with default service implementations
 func DefaultNode(config *config.NodeConfig) (*Node, error) {
-	p2p, err := NewP2PService(config, crypto.NewDefaultCrypto(), config.DB, config.Logger, nil)
+	p2p, err := p2p2.NewP2PService(config, crypto.NewDefaultCrypto(), config.DB, config.Logger, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +101,7 @@ func (n *Node) DB() kv.KVStore {
 }
 
 // P2P returns the P2P service instance
-func (n *Node) P2P() P2PService {
+func (n *Node) P2P() p2p2.P2PService {
 	return n.p2p
 }
 
