@@ -19,21 +19,21 @@ type S5APIProvider interface {
 	// UploadBlobWithStream uploads a raw file
 	// Returns the Raw CID of the uploaded raw file blob
 	// Does not have a file size limit and can handle large files efficiently
-	UploadBlobWithStream(ctx context.Context, hash encoding.Multihash, size int64, openRead fs.OpenReadFunction) (encoding.BlobCID, error)
+	UploadBlobWithStream(ctx context.Context, hash encoding.Blob, size int64, openRead fs.OpenReadFunction) (encoding.BlobCID, error)
 
 	// DownloadBlob downloads a full file blob to memory
 	// Only use this if blobs are smaller than 1 MB
-	DownloadBlob(ctx context.Context, hash encoding.Multihash, route *encoding.Route) ([]byte, error)
+	DownloadBlob(ctx context.Context, hash encoding.Blob, route *encoding.Route) ([]byte, error)
 
 	// DownloadBlobSlice downloads a slice of a blob to memory
 	// From start (inclusive) to end (exclusive)
-	DownloadBlobSlice(ctx context.Context, hash encoding.Multihash, start, end int64, route *encoding.Route) ([]byte, error)
+	DownloadBlobSlice(ctx context.Context, hash encoding.Blob, start, end int64, route *encoding.Route) ([]byte, error)
 
 	// PinHash pins a hash to ensure it remains available
-	PinHash(ctx context.Context, hash encoding.Multihash) error
+	PinHash(ctx context.Context, hash encoding.Blob) error
 
 	// UnpinHash unpins a previously pinned hash
-	UnpinHash(ctx context.Context, hash encoding.Multihash) error
+	UnpinHash(ctx context.Context, hash encoding.Blob) error
 
 	// RegistryGet retrieves a registry entry
 	RegistryGet(ctx context.Context, pk []byte, route *encoding.Route) (*encoding.SignedRegistryEntry, error)

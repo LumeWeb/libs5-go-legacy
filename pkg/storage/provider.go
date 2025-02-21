@@ -16,7 +16,7 @@ var _ StorageLocationProvider = (*StorageLocationProviderImpl)(nil)
 type StorageLocationProviderImpl struct {
 	p2p             p2p.P2PService
 	storage         StorageService
-	hash            *encoding.Multihash
+	hash            *encoding.Blob
 	types           []StorageLocationType
 	timeoutDuration time.Duration
 	availableNodes  []*encoding.NodeId
@@ -244,7 +244,7 @@ func containsNode(slice []*encoding.NodeId, item *encoding.NodeId) bool {
 type StorageLocationProviderParams struct {
 	P2P           p2p.P2PService
 	Storage       StorageService
-	Hash          *encoding.Multihash
+	Hash          *encoding.Blob
 	LocationTypes []StorageLocationType
 	ExcludeNodes  []*encoding.NodeId
 	Logger        *zap.Logger

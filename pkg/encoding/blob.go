@@ -8,36 +8,36 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/crypto"
 )
 
-type MultihashCode = int
+type BlobCode = int
 
-type Multihash struct {
+type Blob struct {
 	fullBytes []byte
 }
 
-func (m *Multihash) FullBytes() []byte {
+func (m *Blob) FullBytes() []byte {
 	return m.fullBytes
 }
 
-var _ json.Marshaler = (*Multihash)(nil)
-var _ json.Unmarshaler = (*Multihash)(nil)
+var _ json.Marshaler = (*Blob)(nil)
+var _ json.Unmarshaler = (*Blob)(nil)
 
-func NewMultihash(fullBytes []byte) *Multihash {
-	return &Multihash{fullBytes: fullBytes}
+func NewMultihash(fullBytes []byte) *Blob {
+	return &Blob{fullBytes: fullBytes}
 }
 
-func (m *Multihash) FunctionType() crypto.HashType {
+func (m *Blob) FunctionType() crypto.HashType {
 	return crypto.HashType(m.fullBytes[0])
 }
 
-func (m *Multihash) HashBytes() []byte {
+func (m *Blob) HashBytes() []byte {
 	return m.fullBytes[1:]
 }
 
-func MultihashFromBytes(bytes []byte, kind crypto.HashType) *Multihash {
+func MultihashFromBytes(bytes []byte, kind crypto.HashType) *Blob {
 	return NewMultihash(append([]byte{byte(kind)}, bytes...))
 }
 
-func MultihashFromBase64Url(hash string) (*Multihash, error) {
+func MultihashFromBase64Url(hash string) (*Blob, error) {
 	ret, err := base64.RawURLEncoding.DecodeString(hash)
 	if err != nil {
 		return nil, err
@@ -45,26 +45,26 @@ func MultihashFromBase64Url(hash string) (*Multihash, error) {
 	return NewMultihash(ret), nil
 }
 
-func (m *Multihash) ToBase64Url() (string, error) {
+func (m *Blob) ToBase64Url() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(m.fullBytes), nil
 }
 
-func (m *Multihash) ToBase32() (string, error) {
+func (m *Blob) ToBase32() (string, error) {
 	return base32.StdEncoding.EncodeToString(m.fullBytes), nil
 }
 
-func (m *Multihash) ToString() (string, error) {
+func (m *Blob) ToString() (string, error) {
 	if m.FunctionType() == crypto.HashType(CIDTypeBridge) {
 		return string(m.fullBytes), nil // Assumes the bytes are valid UTF-8
 	}
 	return m.ToBase64Url()
 }
 
-func (m *Multihash) Equals(other *Multihash) bool {
+func (m *Blob) Equals(other *Blob) bool {
 	return bytes.Equal(m.fullBytes, other.fullBytes)
 }
 
-func (b *Multihash) UnmarshalJSON(data []byte) error {
+func (b *Blob) UnmarshalJSON(data []byte) error {
 	decodedData, err := MultihashFromBase64Url(string(data))
 	if err != nil {
 		return err
@@ -73,7 +73,7 @@ func (b *Multihash) UnmarshalJSON(data []byte) error {
 	b.fullBytes = decodedData.fullBytes
 	return nil
 }
-func (b Multihash) MarshalJSON() ([]byte, error) {
+func (b Blob) MarshalJSON() ([]byte, error) {
 	url, err := b.ToBase64Url()
 	if err != nil {
 		return nil, err

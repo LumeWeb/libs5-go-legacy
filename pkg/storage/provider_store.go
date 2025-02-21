@@ -5,6 +5,6 @@ import (
 )
 
 type ProviderStore interface {
-	CanProvide(hash *encoding.Multihash, kind []StorageLocationType) bool
-	Provide(hash *encoding.Multihash, kind []StorageLocationType) (StorageLocation, error)
+	CanProvide(hash *encoding.Blob, kind []StorageLocationType) bool
+	Provide(hash *encoding.Blob, kind []StorageLocationType) (StorageLocation, error)
 }

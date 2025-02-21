@@ -7,7 +7,7 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/protocol"
 )
 
-func PrepareProvideMessage(identity *crypto.KeyPairEd25519, hash *encoding.Multihash, location StorageLocation) []byte {
+func PrepareProvideMessage(identity *crypto.KeyPairEd25519, hash *encoding.Blob, location StorageLocation) []byte {
 	// Initialize the list with the record type.
 	list := []byte{byte(protocol.RecordTypeStorageLocation)}
 

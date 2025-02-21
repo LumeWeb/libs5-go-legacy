@@ -20,7 +20,7 @@ var (
 type CID struct {
 	Multibase
 	Type CIDType
-	Hash Multihash
+	Hash Blob
 	Size uint64
 }
 
@@ -29,7 +29,7 @@ var _ json.Unmarshaler = (*CID)(nil)
 var _ msgpack.CustomEncoder = (*CID)(nil)
 var _ msgpack.CustomDecoder = (*CID)(nil)
 
-func NewCID(Type CIDType, Hash Multihash, Size uint64) *CID {
+func NewCID(Type CIDType, Hash Blob, Size uint64) *CID {
 	c := &CID{
 		Type: Type,
 		Hash: Hash,

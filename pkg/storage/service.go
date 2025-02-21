@@ -26,9 +26,9 @@ var (
 )
 
 type StorageService interface {
-	GetCachedStorageLocations(hash *encoding.Multihash, kinds []StorageLocationType, local bool) (map[string]StorageLocation, error)
-	AddStorageLocation(hash *encoding.Multihash, nodeId *encoding.NodeId, location StorageLocation, message []byte) error
-	DownloadBytesByHash(hash *encoding.Multihash) ([]byte, error)
+	GetCachedStorageLocations(hash *encoding.Blob, kinds []StorageLocationType, local bool) (map[string]StorageLocation, error)
+	AddStorageLocation(hash *encoding.Blob, nodeId *encoding.NodeId, location StorageLocation, message []byte) error
+	DownloadBytesByHash(hash *encoding.Blob) ([]byte, error)
 	DownloadBytesByCID(cid *encoding.CID) ([]byte, error)
 	GetMetadataByCID(cid *encoding.CID) (metadata.Metadata, error)
 	ParseMetadata(bytes []byte, cid *encoding.CID) (metadata.Metadata, error)
@@ -105,7 +105,7 @@ func (n *StorageServiceDefault) ProviderStore() ProviderStore {
 	return n.providerStore
 }
 
-func (s *StorageServiceDefault) GetCachedStorageLocations(hash *encoding.Multihash, kinds []StorageLocationType, local bool) (map[string]StorageLocation, error) {
+func (s *StorageServiceDefault) GetCachedStorageLocations(hash *encoding.Blob, kinds []StorageLocationType, local bool) (map[string]StorageLocation, error) {
 	locations := make(map[string]StorageLocation)
 
 	locationMap, err := s.readStorageLocationsFromDB(hash)
@@ -173,7 +173,7 @@ func (s *StorageServiceDefault) GetCachedStorageLocations(hash *encoding.Multiha
 	return locations, nil
 }
 
-func (s *StorageServiceDefault) getLocalStorageLocation(hash *encoding.Multihash, kinds []StorageLocationType) StorageLocation {
+func (s *StorageServiceDefault) getLocalStorageLocation(hash *encoding.Blob, kinds []StorageLocationType) StorageLocation {
 	if s.providerStore != nil {
 		if s.providerStore.CanProvide(hash, kinds) {
 			location, _ := s.providerStore.Provide(hash, kinds)
@@ -189,7 +189,7 @@ func (s *StorageServiceDefault) getLocalStorageLocation(hash *encoding.Multihash
 	return nil
 }
 
-func (s *StorageServiceDefault) readStorageLocationsFromDB(hash *encoding.Multihash) (storage.StorageLocationMap, error) {
+func (s *StorageServiceDefault) readStorageLocationsFromDB(hash *encoding.Blob) (storage.StorageLocationMap, error) {
 	var locationMap storage.StorageLocationMap
 
 	value, err := s.bucket.Get(hash.FullBytes())
@@ -211,7 +211,7 @@ func (s *StorageServiceDefault) readStorageLocationsFromDB(hash *encoding.Multih
 	return locationMap, nil
 }
 
-func (s *StorageServiceDefault) AddStorageLocation(hash *encoding.Multihash, nodeId *encoding.NodeId, location StorageLocation, message []byte) error {
+func (s *StorageServiceDefault) AddStorageLocation(hash *encoding.Blob, nodeId *encoding.NodeId, location StorageLocation, message []byte) error {
 	// Read existing storage locations
 	locationDb, err := s.readStorageLocationsFromDB(hash)
 	if err != nil {
@@ -254,7 +254,7 @@ func (s *StorageServiceDefault) AddStorageLocation(hash *encoding.Multihash, nod
 	return nil
 }
 
-func (s *StorageServiceDefault) DownloadBytesByHash(hash *encoding.Multihash) ([]byte, error) {
+func (s *StorageServiceDefault) DownloadBytesByHash(hash *encoding.Blob) ([]byte, error) {
 	// Initialize the download URI provider
 	dlUriProvider := NewStorageLocationProvider(StorageLocationProviderParams{
 		P2P:     s.p2p,
