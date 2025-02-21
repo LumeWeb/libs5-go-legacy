@@ -25,3 +25,5 @@ var ProtocolMethodMap = map[ProtocolMethod]string{
 	RecordTypeStreamEvent:       "StreamEvent",
 	RecordTypeRegistryEntry:     "RegistryEntry",
 }
+
+const SupportedFeatures = 0x03
