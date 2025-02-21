@@ -10,19 +10,16 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/encoding"
 	"go.lumeweb.com/libs5-go/pkg/kv"
 	"go.lumeweb.com/libs5-go/pkg/p2p"
-	"go.lumeweb.com/libs5-go/pkg/service"
 	"go.lumeweb.com/libs5-go/pkg/structs"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
-	"old/metadata"
-	"old/types"
 	"time"
 )
 
 const cacheBucketName = "object-cache"
 
-var _ StorageServiceDefault = (*StorageServiceDefault)(nil)
+var _ StorageService = (*StorageServiceDefault)(nil)
 
 var (
 	ErrUnsupportedMetaFormat = errors.New("unsupported metadata format")
@@ -71,7 +68,7 @@ type StorageParams struct {
 	Logger  *zap.Logger
 	Config  *config.NodeConfig
 	DB      kv.KVStore
-	P2P     service.P2PService
+	P2P     p2p.P2PService
 	KeyPair *crypto.KeyPairEd25519
 }
 
@@ -400,4 +397,11 @@ func (s *StorageServiceDefault) ParseMetadata(bytes []byte, cid *encoding.CID) (
 
 func (s *StorageServiceDefault) Logger() *zap.Logger {
 	return s.logger
+}
+
+func (s *StorageServiceDefault) Config() *config.NodeConfig {
+	return s.config
+}
+func (s *StorageServiceDefault) DB() kv.KVStore {
+	return s.db
 }
