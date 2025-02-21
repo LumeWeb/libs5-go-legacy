@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/rand"
 	"github.com/vmihailenco/msgpack/v5"
+	"go.lumeweb.com/libs5-go/pkg/config"
+	"go.lumeweb.com/libs5-go/pkg/transport"
 	"go.uber.org/zap"
 	"io"
 	"math"
@@ -49,7 +51,7 @@ type IncomingMessageData struct {
 	Data     []byte
 	Ctx      context.Context
 	Logger   *zap.Logger
-	Peer     net.Peer
+	Peer     transport.Peer
 	Config   *config.NodeConfig
 	VerifyId bool
 	Mediator Mediator
