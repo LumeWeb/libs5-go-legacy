@@ -76,7 +76,6 @@ type P2PServiceDefault struct {
 	maxOutgoingPeerFailures uint
 
 	logger *zap.Logger
-	// Add any other P2P-specific fields here
 }
 
 func NewP2PService(cfg *config.NodeConfig, crypto crypto.CryptoImplementation, db kv.KVStore, logger *zap.Logger, selfConnectionUris []*url.URL) (*P2PServiceDefault, error) {
@@ -639,37 +638,37 @@ func (p *P2PServiceDefault) ConnectionTracker() *sync.WaitGroup {
 func (p *P2PServiceDefault) NetworkId() string {
 	return p.networkID
 }
-func (n *P2PServiceDefault) HashQueryRoutingTable() structs.Map {
-	return n.hashQueryRoutingTable
+func (p *P2PServiceDefault) HashQueryRoutingTable() structs.Map {
+	return p.hashQueryRoutingTable
 }
 
-func (n *P2PServiceDefault) Init(ctx context.Context) error {
-	if n.nodeConfig.P2P == nil {
+func (p *P2PServiceDefault) Init(ctx context.Context) error {
+	if p.nodeConfig.P2P == nil {
 		return errors.New("Nodeconfig is nil")
 	}
-	if n.nodeConfig.P2P.Peers == nil {
+	if p.nodeConfig.P2P.Peers == nil {
 		return errors.New("Nodeconfig P2P peers is nil")
 	}
-	for _, peer := range n.nodeConfig.P2P.Peers.Blocklist {
+	for _, peer := range p.nodeConfig.P2P.Peers.Blocklist {
 		_, err := encoding.DecodeNodeId(peer)
 		if err != nil {
 			return err
 		}
 
-		n.incomingPeerBlockList.Put(peer, true)
-		n.outgoingPeerBlocklist.Put(peer, true)
+		p.incomingPeerBlockList.Put(peer, true)
+		p.outgoingPeerBlocklist.Put(peer, true)
 	}
 	return nil
 }
-func (n *P2PServiceDefault) Stop(ctx context.Context) error {
+func (p *P2PServiceDefault) Stop(ctx context.Context) error {
 	return nil
 }
-func (n *P2PServiceDefault) Logger() *zap.Logger {
-	return n.logger
+func (p *P2PServiceDefault) Logger() *zap.Logger {
+	return p.logger
 }
-func (n *P2PServiceDefault) Config() *config.NodeConfig {
-	return n.nodeConfig
+func (p *P2PServiceDefault) Config() *config.NodeConfig {
+	return p.nodeConfig
 }
-func (n *P2PServiceDefault) Db() kv.KVStore {
-	return n.db
+func (p *P2PServiceDefault) DB() kv.KVStore {
+	return p.db
 }
