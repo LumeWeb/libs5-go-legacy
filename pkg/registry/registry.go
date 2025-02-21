@@ -10,7 +10,6 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/kv"
 	"go.lumeweb.com/libs5-go/pkg/protocol"
 	"go.lumeweb.com/libs5-go/pkg/registry/entry"
-	_ "go.lumeweb.com/libs5-go/pkg/registry/entry"
 	"go.lumeweb.com/libs5-go/pkg/transport"
 	"go.uber.org/zap"
 )
@@ -168,4 +167,19 @@ func UnmarshalSignedRegistryEntry(event []byte) (sre entry.SignedRegistryEntry, 
 	}
 
 	return NewSignedRegistryEntry(pk, revision, event[43:signatureStart], signature), nil
+}
+
+type SignedRegistryEntry interface {
+	PK() []byte
+	Revision() uint64
+	Data() []byte
+	Signature() []byte
+	SetPK(pk []byte)
+	SetRevision(revision uint64)
+	SetData(data []byte)
+	SetSignature(signature []byte)
+	Verify() bool
+}
+type RegistryEntry interface {
+	Sign() SignedRegistryEntry
 }

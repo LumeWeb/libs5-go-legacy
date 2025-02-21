@@ -9,9 +9,7 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/crypto"
 	"go.lumeweb.com/libs5-go/pkg/encoding"
 	"go.lumeweb.com/libs5-go/pkg/kv"
-	"go.lumeweb.com/libs5-go/pkg/p2p"
 	"go.lumeweb.com/libs5-go/pkg/protocol"
-	"go.lumeweb.com/libs5-go/pkg/registry/entry"
 	"go.lumeweb.com/libs5-go/pkg/structs"
 	"go.lumeweb.com/libs5-go/pkg/transport"
 	"go.uber.org/zap"
@@ -29,7 +27,11 @@ type RegistryServiceDefault struct {
 	logger  *zap.Logger
 	config  *config.NodeConfig
 	db      kv.KVStore
-	p2p     p2p.P2PService
+	p2p     P2PPeersGetter
+}
+
+type P2PPeersGetter interface {
+	Peers() structs.Map
 }
 
 func (r *RegistryServiceDefault) Logger() *zap.Logger {
@@ -68,7 +70,7 @@ func (r *RegistryServiceDefault) Init(ctx context.Context) error {
 	return nil
 }
 
-func NewRegistry(config *config.NodeConfig, logger *zap.Logger, db kv.KVStore, p2p p2p.P2PService) *RegistryServiceDefault {
+func NewRegistry(config *config.NodeConfig, logger *zap.Logger, db kv.KVStore, p2p P2PPeersGetter) *RegistryServiceDefault {
 	return &RegistryServiceDefault{
 		streams: structs.NewMap(),
 		subs:    structs.NewMap(),
@@ -78,7 +80,7 @@ func NewRegistry(config *config.NodeConfig, logger *zap.Logger, db kv.KVStore, p
 		p2p:     p2p,
 	}
 }
-func (r *RegistryServiceDefault) Set(sre entry.SignedRegistryEntry, trusted bool, receivedFrom transport.Peer) error {
+func (r *RegistryServiceDefault) Set(sre SignedRegistryEntry, trusted bool, receivedFrom transport.Peer) error {
 	hash := encoding.NewMultihash(sre.PK())
 	hashString, err := hash.ToString()
 	if err != nil {
@@ -157,7 +159,7 @@ func (r *RegistryServiceDefault) Set(sre entry.SignedRegistryEntry, trusted bool
 
 	return nil
 }
-func (r *RegistryServiceDefault) BroadcastEntry(sre entry.SignedRegistryEntry, receivedFrom transport.Peer) error {
+func (r *RegistryServiceDefault) BroadcastEntry(sre SignedRegistryEntry, receivedFrom transport.Peer) error {
 	hash := encoding.NewMultihash(sre.PK())
 	hashString, err := hash.ToString()
 	if err != nil {
@@ -217,7 +219,7 @@ func (r *RegistryServiceDefault) SendRegistryRequest(pk []byte) error {
 
 	return nil
 }
-func (r *RegistryServiceDefault) Get(pk []byte) (entry.SignedRegistryEntry, error) {
+func (r *RegistryServiceDefault) Get(pk []byte) (SignedRegistryEntry, error) {
 	key := encoding.NewMultihash(pk)
 	keyString, err := key.ToString()
 	if err != nil {
@@ -276,16 +278,16 @@ func (r *RegistryServiceDefault) Get(pk []byte) (entry.SignedRegistryEntry, erro
 	return res, nil
 }
 
-func (r *RegistryServiceDefault) Listen(pk []byte, cb func(sre entry.SignedRegistryEntry)) (func(), error) {
+func (r *RegistryServiceDefault) Listen(pk []byte, cb func(sre SignedRegistryEntry)) (func(), error) {
 	key, err := encoding.NewMultihash(pk).ToString()
 	if err != nil {
 		return nil, err
 	}
 
 	cbProxy := func(event *emitter.Event) {
-		sre, ok := event.Args[0].(entry.SignedRegistryEntry)
+		sre, ok := event.Args[0].(SignedRegistryEntry)
 		if !ok {
-			r.Logger().Error("Failed to cast event to entry.SignedRegistryEntry")
+			r.Logger().Error("Failed to cast event to SignedRegistryEntry")
 			return
 		}
 
@@ -309,7 +311,7 @@ func (r *RegistryServiceDefault) Listen(pk []byte, cb func(sre entry.SignedRegis
 	}, nil
 }
 
-func (r *RegistryServiceDefault) getFromDB(pk []byte) (sre entry.SignedRegistryEntry, err error) {
+func (r *RegistryServiceDefault) getFromDB(pk []byte) (sre SignedRegistryEntry, err error) {
 	value, err := r.bucket.Get(pk)
 	if err != nil {
 		return nil, err
