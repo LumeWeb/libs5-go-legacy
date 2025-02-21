@@ -73,27 +73,29 @@ func DecodeMsgpackURLArray(dec *msgpack.Decoder) ([]*url.URL, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	urlArray := make([]*url.URL, arrayLen)
-
 	for i := 0; i < int(arrayLen); i++ {
 		item, err := dec.DecodeInterface()
 		if err != nil {
 			return nil, err
 		}
-
-		// Type assert each item to *url.URL
+		// Type assert each item to string
 		urlItem, ok := item.(string)
 		if !ok {
-			// Handle the case where the item is not a *url.URL
 			return nil, fmt.Errorf("expected string, got %T", item)
 		}
 
-		urlArray[i], err = url.Parse(urlItem)
+		parsedURL, err := url.Parse(urlItem)
 		if err != nil {
 			return nil, err
 		}
-	}
 
+		// Additional validation to ensure it's a valid URL
+		if parsedURL.Scheme == "" || parsedURL.Host == "" {
+			return nil, fmt.Errorf("invalid URL format: missing scheme or host: %s", urlItem)
+		}
+
+		urlArray[i] = parsedURL
+	}
 	return urlArray, nil
 }
