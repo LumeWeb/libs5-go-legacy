@@ -4,26 +4,29 @@ import (
 	"context"
 	"errors"
 	"github.com/vmihailenco/msgpack/v5"
-	"go.lumeweb.com/libs5-go/pkg/metadata"
+	"go.lumeweb.com/libs5-go/pkg/config"
+	"go.lumeweb.com/libs5-go/pkg/encoding"
+	"go.lumeweb.com/libs5-go/pkg/kv"
+	"go.lumeweb.com/libs5-go/pkg/protocol"
+	"go.lumeweb.com/libs5-go/pkg/service"
 	"go.lumeweb.com/libs5-go/pkg/structs"
 	"go.lumeweb.com/libs5-go/pkg/transport"
-	"go.lumeweb.com/libs5-go/pkg/types"
 	"go.uber.org/zap"
 	"time"
 )
 
 const registryBucketName = "registry"
 
-var (
-	_ service.Service         = (*RegistryServiceDefault)(nil)
-	_ service.RegistryService = (*RegistryServiceDefault)(nil)
-)
+var _ service.RegistryService = (*RegistryServiceDefault)(nil)
 
 type RegistryServiceDefault struct {
 	streams structs.Map
 	subs    structs.Map
-	bucket  db.KVStore
-	service.ServiceBase
+	bucket  kv.KVStore
+	logger  *zap.Logger
+	config  *config.NodeConfig
+	db      kv.KVStore
+	p2p     service.P2PService
 }
 
 func (r *RegistryServiceDefault) Start(ctx context.Context) error {
