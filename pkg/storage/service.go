@@ -4,6 +4,11 @@ import (
 	"context"
 	"errors"
 	"github.com/vmihailenco/msgpack/v5"
+	"go.lumeweb.com/libs5-go/pkg/config"
+	"go.lumeweb.com/libs5-go/pkg/crypto"
+	"go.lumeweb.com/libs5-go/pkg/encoding"
+	"go.lumeweb.com/libs5-go/pkg/kv"
+	"go.lumeweb.com/libs5-go/pkg/service"
 	"go.lumeweb.com/libs5-go/pkg/structs"
 	"go.uber.org/zap"
 	"io"
@@ -150,7 +155,7 @@ func (s *StorageService) GetCachedStorageLocations(hash *encoding.Multihash, kin
 	return locations, nil
 }
 
-func (s *StorageService) getLocalStorageLocation(hash *encoding.Multihash, kinds []types.StorageLocationType) storage.StorageLocation {
+func (s *StorageService) getLocalStorageLocation(hash *encoding.Multihash, kinds []StorageLocationType) StorageLocation {
 	if s.providerStore != nil {
 		if s.providerStore.CanProvide(hash, kinds) {
 			location, _ := s.providerStore.Provide(hash, kinds)
