@@ -30,16 +30,26 @@ type StorageService struct {
 	config        *config.NodeConfig
 	db            kv.KVStore
 	p2p           service.P2PService
+	keyPair       *crypto.KeyPairEd25519
 }
 
-func NewStorage(config *config.NodeConfig, logger *zap.Logger, db kv.KVStore, p2p service.P2PService) *StorageService {
+func NewStorage(params StorageParams) *StorageService {
 	return &StorageService{
 		metadataCache: structs.NewMap(),
-		logger:        logger,
-		config:        config,
-		db:            db,
-		p2p:           p2p,
+		logger:        params.Logger,
+		config:        params.Config,
+		db:            params.DB,
+		p2p:           params.P2P,
+		keyPair:       params.KeyPair,
 	}
+}
+
+type StorageParams struct {
+	Logger  *zap.Logger
+	Config  *config.NodeConfig
+	DB      kv.KVStore
+	P2P     service.P2PService
+	KeyPair *crypto.KeyPairEd25519
 }
 
 func (s *StorageService) Start(ctx context.Context) error {
@@ -145,10 +155,10 @@ func (s *StorageService) GetCachedStorageLocations(hash *encoding.Multihash, kin
 
 func (s *StorageService) getLocalStorageLocation(hash *encoding.Multihash, kinds []types.StorageLocationType) storage.StorageLocation {
 	if s.ProviderStore() != nil {
-		if s.ProviderStore().CanProvide(hash, kinds) {
-			location, _ := s.ProviderStore().Provide(hash, kinds)
+		if s.providerStore.CanProvide(hash, kinds) {
+			location, _ := s.providerStore.Provide(hash, kinds)
 
-			message := storage.PrepareProvideMessage(s.Services().P2P().Config().KeyPair, hash, location)
+			message := PrepareProvideMessage(s.keyPair, hash, location)
 
 			location.SetProviderMessage(message)
 
