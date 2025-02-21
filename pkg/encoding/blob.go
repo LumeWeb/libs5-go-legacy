@@ -15,7 +15,9 @@ type Blob struct {
 }
 
 func (m *Blob) FullBytes() []byte {
-	return m.fullBytes
+	result := make([]byte, len(m.fullBytes))
+	copy(result, m.fullBytes)
+	return result
 }
 
 var _ json.Marshaler = (*Blob)(nil)
@@ -55,7 +57,7 @@ func (m *Blob) ToBase32() (string, error) {
 
 func (m *Blob) ToString() (string, error) {
 	if m.FunctionType() == crypto.HashType(CIDTypeBridge) {
-		return string(m.fullBytes), nil // Assumes the bytes are valid UTF-8
+		return string(m.HashBytes()), nil
 	}
 	return m.ToBase64Url()
 }
@@ -65,12 +67,17 @@ func (m *Blob) Equals(other *Blob) bool {
 }
 
 func (b *Blob) UnmarshalJSON(data []byte) error {
-	decodedData, err := MultihashFromBase64Url(string(data))
+	var str string
+	if err := json.Unmarshal(data, &str); err != nil {
+		return err
+	}
+
+	decodedBlob, err := MultihashFromBase64Url(str)
 	if err != nil {
 		return err
 	}
 
-	b.fullBytes = decodedData.fullBytes
+	*b = *decodedBlob
 	return nil
 }
 func (b Blob) MarshalJSON() ([]byte, error) {
@@ -79,6 +86,5 @@ func (b Blob) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	return []byte(url), nil
-
+	return json.Marshal(url)
 }
