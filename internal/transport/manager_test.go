@@ -10,12 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// socket defines a network connection abstraction
-type socket interface {
-	Close() error
-}
-
-// mockSocket implements socket for testing
+// mockSocket implements Socket for testing
 type mockSocket struct {
 	closed bool
 }
@@ -25,7 +20,7 @@ func (s *mockSocket) Close() error {
 	return nil
 }
 
-// mockPeerFactory implements PeerFactory for testing
+// mockPeerFactory implements both PeerFactory and PeerStatic interfaces
 type mockPeerFactory struct {
 	peers map[string]*mockPeer
 }
@@ -36,7 +31,7 @@ func newMockPeerFactory() *mockPeerFactory {
 	}
 }
 
-// NewPeer creates a new mock peer
+// NewPeer creates a new mock peer - implements PeerFactory
 func (f *mockPeerFactory) NewPeer(config *TransportPeerConfig) (Peer, error) {
 	peer := newMockPeer()
 	peer.SetSocket(config.Socket)
@@ -47,8 +42,8 @@ func (f *mockPeerFactory) NewPeer(config *TransportPeerConfig) (Peer, error) {
 	return peer, nil
 }
 
-// Connect returns a mock socket
-func (f *mockPeerFactory) Connect(uri *url.URL) (socket, error) {
+// Connect returns a mock socket - implements PeerStatic
+func (f *mockPeerFactory) Connect(uri *url.URL) (interface{}, error) {
 	return &mockSocket{}, nil
 }
 
