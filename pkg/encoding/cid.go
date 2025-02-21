@@ -11,8 +11,6 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/crypto"
 	"go.lumeweb.com/libs5-go/pkg/internal"
 	"go.lumeweb.com/libs5-go/pkg/registry"
-	"old/types"
-	"old/utils"
 )
 
 var (
