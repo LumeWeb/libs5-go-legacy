@@ -8,6 +8,7 @@ require (
 	github.com/emirpasic/gods v1.18.1
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/multiformats/go-multibase v0.2.0
+	github.com/olebedev/emitter v0.0.0-20230411050614-349169dec2ba
 	github.com/samber/lo v1.49.1
 	github.com/stretchr/testify v1.10.0
 	github.com/vmihailenco/msgpack/v5 v5.4.1

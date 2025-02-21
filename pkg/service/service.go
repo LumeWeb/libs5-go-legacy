@@ -23,57 +23,6 @@ type BaseService interface {
 	Init(ctx context.Context) error
 }
 
-type P2PService interface {
-	BaseService
-	SelfConnectionUris() []*url.URL
-	Peers() structs.Map
-	ConnectToNode(connectionUris []*url.URL, retry uint, fromPeer transport.Peer) error
-	OnNewPeer(peer transport.Peer, verifyId bool) error
-	GetNodeScore(nodeId *encoding.NodeId) (float64, error)
-	SortNodesByScore(nodes []*encoding.NodeId) ([]*encoding.NodeId, error)
-	SignMessageSimple(message []byte) ([]byte, error)
-	AddPeer(peer transport.Peer) error
-	SendPublicPeersToPeer(peer transport.Peer, peersToSend []transport.Peer) error
-	SendHashRequest(hash *encoding.Multihash, kinds []storage.StorageLocationType) error
-	UpVote(nodeId *encoding.NodeId) error
-	DownVote(nodeId *encoding.NodeId) error
-	NodeId() *encoding.NodeId
-	WaitOnConnectedPeers()
-	ConnectionTracker() *sync.WaitGroup
-	NetworkId() string
-	HashQueryRoutingTable() structs.Map
-	Init(ctx context.Context) error
-	Stop(ctx context.Context) error
-	Start(ctx context.Context) error
-	Logger() *zap.Logger
-	Config() *config.NodeConfig
-	DB() kv.KVStore
-}
-
-type RegistryService interface {
-	Set(sre registry.SignedRegistryEntry, trusted bool, receivedFrom transport.Peer) error
-	BroadcastEntry(sre registry.SignedRegistryEntry, receivedFrom transport.Peer) error
-	SendRegistryRequest(pk []byte) error
-	Get(pk []byte) (registry.SignedRegistryEntry, error)
-	Listen(pk []byte, cb func(sre registry.SignedRegistryEntry)) (func(), error)
-	Init(ctx context.Context) error
-	Stop(ctx context.Context) error
-	Start(ctx context.Context) error
-	Logger() *zap.Logger
-	Config() *config.NodeConfig
-	DB() kv.KVStore
-}
-
-type HTTPService interface {
-	GetHttpRouter() map[string]http.HandlerFunc
-	Init(ctx context.Context) error
-	Stop(ctx context.Context) error
-	Start(ctx context.Context) error
-	Logger() *zap.Logger
-	Config() *config.NodeConfig
-	DB() kv.KVStore
-}
-
 type StorageService interface {
 	GetCachedStorageLocations(hash *encoding.Multihash, kinds []storage.StorageLocationType, local bool) (map[string]storage.StorageLocation, error)
 	AddStorageLocation(hash *encoding.Multihash, nodeId *encoding.NodeId, location storage.StorageLocation, message []byte) error
@@ -90,4 +39,3 @@ type StorageService interface {
 	Config() *config.NodeConfig
 	DB() kv.KVStore
 }
-

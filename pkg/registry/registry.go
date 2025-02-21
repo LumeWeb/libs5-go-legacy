@@ -1,17 +1,38 @@
 package registry
 
 import (
+	"context"
 	ed25519p "crypto/ed25519"
 	"errors"
+	"go.lumeweb.com/libs5-go/pkg/config"
 	"go.lumeweb.com/libs5-go/pkg/crypto"
 	"go.lumeweb.com/libs5-go/pkg/encoding"
+	"go.lumeweb.com/libs5-go/pkg/kv"
 	"go.lumeweb.com/libs5-go/pkg/protocol"
+	"go.lumeweb.com/libs5-go/pkg/transport"
+	"go.uber.org/zap"
 )
 
 var (
 	_ SignedRegistryEntry = (*SignedRegistryEntryImpl)(nil)
 	_ SignedRegistryEntry = (*SignedRegistryEntryImpl)(nil)
 )
+
+const RegistryMaxDataSize = 64
+
+type RegistryService interface {
+	Set(sre SignedRegistryEntry, trusted bool, receivedFrom transport.Peer) error
+	BroadcastEntry(sre SignedRegistryEntry, receivedFrom transport.Peer) error
+	SendRegistryRequest(pk []byte) error
+	Get(pk []byte) (SignedRegistryEntry, error)
+	Listen(pk []byte, cb func(sre SignedRegistryEntry)) (func(), error)
+	Init(ctx context.Context) error
+	Stop(ctx context.Context) error
+	Start(ctx context.Context) error
+	Logger() *zap.Logger
+	Config() *config.NodeConfig
+	DB() kv.KVStore
+}
 
 type SignedRegistryEntry interface {
 	PK() []byte

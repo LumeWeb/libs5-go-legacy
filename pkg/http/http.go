@@ -4,7 +4,9 @@ import (
 	"context"
 	"go.lumeweb.com/httputil"
 	"go.lumeweb.com/libs5-go/build"
-	"go.lumeweb.com/libs5-go/pkg/service"
+	"go.lumeweb.com/libs5-go/pkg/config"
+	"go.lumeweb.com/libs5-go/pkg/kv"
+	"go.lumeweb.com/libs5-go/pkg/p2p"
 	"go.lumeweb.com/libs5-go/pkg/transport"
 	"go.uber.org/zap"
 	"net"
@@ -14,7 +16,17 @@ import (
 	"strings"
 )
 
-var _ service.HTTPService = (*HTTPServiceDefault)(nil)
+var _ HTTPService = (*HTTPServiceDefault)(nil)
+
+type HTTPService interface {
+	GetHttpRouter() map[string]http.HandlerFunc
+	Init(ctx context.Context) error
+	Stop(ctx context.Context) error
+	Start(ctx context.Context) error
+	Logger() *zap.Logger
+	Config() *config.NodeConfig
+	DB() kv.KVStore
+}
 
 type P2PNodesResponse struct {
 	Nodes []P2PNodeResponse `json:"nodes"`
@@ -29,10 +41,22 @@ type HTTPServiceDefault struct {
 	logger *zap.Logger
 	config *config.NodeConfig
 	db     kv.KVStore
-	p2p    service.P2PService
+	p2p    p2p.P2PService
 }
 
-func NewHTTP(config *config.NodeConfig, logger *zap.Logger, db kv.KVStore, p2p service.P2PService) *HTTPServiceDefault {
+func (h *HTTPServiceDefault) Logger() *zap.Logger {
+	return h.logger
+}
+
+func (h *HTTPServiceDefault) Config() *config.NodeConfig {
+	return h.config
+}
+
+func (h *HTTPServiceDefault) DB() kv.KVStore {
+	return h.db
+}
+
+func NewHTTP(config *config.NodeConfig, logger *zap.Logger, db kv.KVStore, p2p p2p.P2PService) *HTTPServiceDefault {
 	return &HTTPServiceDefault{
 		logger: logger,
 		config: config,
@@ -52,15 +76,15 @@ func (h *HTTPServiceDefault) GetHttpRouter() map[string]http.HandlerFunc {
 	return routes
 }
 
-func (h *HTTPServiceDefault) Start(ctx context.Context) error {
+func (h *HTTPServiceDefault) Start(_ context.Context) error {
 	return nil
 }
 
-func (h *HTTPServiceDefault) Stop(ctx context.Context) error {
+func (h *HTTPServiceDefault) Stop(_ context.Context) error {
 	return nil
 }
 
-func (h *HTTPServiceDefault) Init(ctx context.Context) error {
+func (h *HTTPServiceDefault) Init(_ context.Context) error {
 	return nil
 }
 

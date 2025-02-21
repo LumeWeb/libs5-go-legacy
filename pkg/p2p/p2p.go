@@ -5,7 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.lumeweb.com/libs5-go/pkg/config"
+	"go.lumeweb.com/libs5-go/pkg/kv"
+	"go.lumeweb.com/libs5-go/pkg/storage"
+	"go.lumeweb.com/libs5-go/pkg/transport"
 	"net/url"
+	"old/net"
+	"old/types"
 	"sort"
 	"sync"
 	"time"
@@ -24,10 +30,37 @@ var (
 	errConnectionIdMissingNodeID = errors.New("connection id missing node id")
 )
 
-type P2PService struct {
+type P2PService interface {
+	service.BaseService
+	SelfConnectionUris() []*url.URL
+	Peers() structs.Map
+	ConnectToNode(connectionUris []*url.URL, retry uint, fromPeer transport.Peer) error
+	OnNewPeer(peer transport.Peer, verifyId bool) error
+	GetNodeScore(nodeId *encoding.NodeId) (float64, error)
+	SortNodesByScore(nodes []*encoding.NodeId) ([]*encoding.NodeId, error)
+	SignMessageSimple(message []byte) ([]byte, error)
+	AddPeer(peer transport.Peer) error
+	SendPublicPeersToPeer(peer transport.Peer, peersToSend []transport.Peer) error
+	SendHashRequest(hash *encoding.Multihash, kinds []storage.StorageLocationType) error
+	UpVote(nodeId *encoding.NodeId) error
+	DownVote(nodeId *encoding.NodeId) error
+	NodeId() *encoding.NodeId
+	WaitOnConnectedPeers()
+	ConnectionTracker() *sync.WaitGroup
+	NetworkId() string
+	HashQueryRoutingTable() structs.Map
+	Init(ctx context.Context) error
+	Stop(ctx context.Context) error
+	Start(ctx context.Context) error
+	Logger() *zap.Logger
+	Config() *config.NodeConfig
+	DB() kv.KVStore
+}
+
+type P2PServiceDefault struct {
 	nodeConfig              *config.NodeConfig
 	crypto                  crypto.CryptoImplementation
-	db                      db.KVStore
+	db                      kv.KVStore
 	localNodeID             *encoding.NodeId
 	networkID               string
 	selfConnectionUris      []*url.URL
@@ -45,7 +78,7 @@ type P2PService struct {
 	// Add any other P2P-specific fields here
 }
 
-func NewP2PService(cfg *config.NodeConfig, crypto crypto.CryptoImplementation, db db.KVStore, logger *zap.Logger, selfConnectionUris []*url.URL) (*P2PService, error) {
+func NewP2PService(cfg *config.NodeConfig, crypto crypto.CryptoImplementation, db db.KVStore, logger *zap.Logger, selfConnectionUris []*url.URL) (*P2PServiceDefault, error) {
 	localNodeID := encoding.NewNodeId(cfg.KeyPair.PublicKey())
 	if selfConnectionUris == nil || len(selfConnectionUris) == 0 {
 		uri, err := url.Parse(fmt.Sprintf("wss://%s:%d/s5/p2p", cfg.HTTP.API.Domain, cfg.HTTP.API.Port))
@@ -55,7 +88,7 @@ func NewP2PService(cfg *config.NodeConfig, crypto crypto.CryptoImplementation, d
 		selfConnectionUris = []*url.URL{uri}
 	}
 
-	return &P2PService{
+	return &P2PServiceDefault{
 		nodeConfig:            cfg,
 		crypto:                crypto,
 		db:                    db,
@@ -76,7 +109,7 @@ func NewP2PService(cfg *config.NodeConfig, crypto crypto.CryptoImplementation, d
 	}, nil
 }
 
-func (p *P2PService) Start(ctx context.Context) error {
+func (p *P2PServiceDefault) Start(ctx context.Context) error {
 	config := p.nodeConfig
 	if len(config.P2P.Peers.Initial) > 0 {
 		initialPeers := config.P2P.Peers.Initial
@@ -100,7 +133,7 @@ func (p *P2PService) Start(ctx context.Context) error {
 	return nil
 }
 
-func (p *P2PService) ConnectToNode(connectionUris []*url.URL, retry uint, fromPeer net.Peer) error {
+func (p *P2PServiceDefault) ConnectToNode(connectionUris []*url.URL, retry uint, fromPeer net.Peer) error {
 	if len(connectionUris) == 0 {
 		return errors.New("No connection URIs provided")
 	}
@@ -276,7 +309,7 @@ func (p *P2PService) ConnectToNode(connectionUris []*url.URL, retry uint, fromPe
 	return errUnsupportedProtocol
 }
 
-func (p *P2PService) OnNewPeer(peer net.Peer, verifyId bool) error {
+func (p *P2PServiceDefault) OnNewPeer(peer net.Peer, verifyId bool) error {
 	var wg sync.WaitGroup
 
 	var pid string
@@ -334,7 +367,7 @@ func (p *P2PService) OnNewPeer(peer net.Peer, verifyId bool) error {
 	return nil
 }
 
-func (p *P2PService) OnNewPeerListen(peer net.Peer, verifyId bool) {
+func (p *P2PServiceDefault) OnNewPeerListen(peer net.Peer, verifyId bool) {
 	onDone := func() {
 		if peer.Id() != nil {
 			pid, err := peer.Id().ToString()
@@ -415,15 +448,15 @@ func (p *P2PService) OnNewPeerListen(peer net.Peer, verifyId bool) {
 }
 
 // All other service methods
-func (p *P2PService) SelfConnectionUris() []*url.URL {
+func (p *P2PServiceDefault) SelfConnectionUris() []*url.URL {
 	return p.selfConnectionUris
 }
 
-func (p *P2PService) Peers() structs.Map {
+func (p *P2PServiceDefault) Peers() structs.Map {
 	return p.peers
 }
 
-func (p *P2PService) GetNodeScore(nodeId *encoding.NodeId) (float64, error) {
+func (p *P2PServiceDefault) GetNodeScore(nodeId *encoding.NodeId) (float64, error) {
 	if nodeId.Equals(p.localNodeID) {
 		return 1, nil
 	}
@@ -437,7 +470,7 @@ func (p *P2PService) GetNodeScore(nodeId *encoding.NodeId) (float64, error) {
 
 }
 
-func (p *P2PService) readNodeVotes(nodeId *encoding.NodeId) (service.NodeVotes, error) {
+func (p *P2PServiceDefault) readNodeVotes(nodeId *encoding.NodeId) (service.NodeVotes, error) {
 	var value []byte
 
 	value, err := p.db.Get(nodeId.Raw())
@@ -457,7 +490,7 @@ func (p *P2PService) readNodeVotes(nodeId *encoding.NodeId) (service.NodeVotes, 
 
 	return score, nil
 }
-func (p *P2PService) saveNodeVotes(nodeId *encoding.NodeId, votes service.NodeVotes) error {
+func (p *P2PServiceDefault) saveNodeVotes(nodeId *encoding.NodeId, votes service.NodeVotes) error {
 	// Marshal the votes into data
 	data, err := msgpack.Marshal(votes)
 	if err != nil {
@@ -471,7 +504,7 @@ func (p *P2PService) saveNodeVotes(nodeId *encoding.NodeId, votes service.NodeVo
 
 	return nil
 }
-func (p *P2PService) SortNodesByScore(nodes []*encoding.NodeId) ([]*encoding.NodeId, error) {
+func (p *P2PServiceDefault) SortNodesByScore(nodes []*encoding.NodeId) ([]*encoding.NodeId, error) {
 	scores := make(map[encoding.NodeIdCode]float64)
 	var errOccurred error
 
@@ -491,7 +524,7 @@ func (p *P2PService) SortNodesByScore(nodes []*encoding.NodeId) ([]*encoding.Nod
 
 	return nodes, errOccurred
 }
-func (p *P2PService) SignMessageSimple(message []byte) ([]byte, error) {
+func (p *P2PServiceDefault) SignMessageSimple(message []byte) ([]byte, error) {
 	signedMessage := protocol.NewSignedMessageRequest(message)
 	signedMessage.SetNodeId(p.localNodeID)
 
@@ -510,7 +543,7 @@ func (p *P2PService) SignMessageSimple(message []byte) ([]byte, error) {
 	return result, nil
 }
 
-func (p *P2PService) AddPeer(peer net.Peer) error {
+func (p *P2PServiceDefault) AddPeer(peer net.Peer) error {
 	peerId, err := peer.Id().ToString()
 	if err != nil {
 		return err
@@ -519,7 +552,7 @@ func (p *P2PService) AddPeer(peer net.Peer) error {
 
 	return nil
 }
-func (p *P2PService) SendPublicPeersToPeer(peer net.Peer, peersToSend []net.Peer) error {
+func (p *P2PServiceDefault) SendPublicPeersToPeer(peer net.Peer, peersToSend []net.Peer) error {
 	announceRequest := protocol.NewAnnounceRequest(peer, peersToSend)
 
 	message, err := msgpack.Marshal(announceRequest)
@@ -538,7 +571,7 @@ func (p *P2PService) SendPublicPeersToPeer(peer net.Peer, peersToSend []net.Peer
 
 	return nil
 }
-func (p *P2PService) SendHashRequest(hash *encoding.Multihash, kinds []types.StorageLocationType) error {
+func (p *P2PServiceDefault) SendHashRequest(hash *encoding.Multihash, kinds []types.StorageLocationType) error {
 	hashRequest := protocol.NewHashRequest(hash, kinds)
 	message, err := msgpack.Marshal(hashRequest)
 	if err != nil {
@@ -557,7 +590,7 @@ func (p *P2PService) SendHashRequest(hash *encoding.Multihash, kinds []types.Sto
 	return nil
 }
 
-func (p *P2PService) UpVote(nodeId *encoding.NodeId) error {
+func (p *P2PServiceDefault) UpVote(nodeId *encoding.NodeId) error {
 	err := p.vote(nodeId, true)
 	if err != nil {
 		return err
@@ -566,7 +599,7 @@ func (p *P2PService) UpVote(nodeId *encoding.NodeId) error {
 	return nil
 }
 
-func (p *P2PService) DownVote(nodeId *encoding.NodeId) error {
+func (p *P2PServiceDefault) DownVote(nodeId *encoding.NodeId) error {
 	err := p.vote(nodeId, false)
 	if err != nil {
 		return err
@@ -575,7 +608,7 @@ func (p *P2PService) DownVote(nodeId *encoding.NodeId) error {
 	return nil
 }
 
-func (p *P2PService) vote(nodeId *encoding.NodeId, upvote bool) error {
+func (p *P2PServiceDefault) vote(nodeId *encoding.NodeId, upvote bool) error {
 	votes, err := p.readNodeVotes(nodeId)
 	if err != nil {
 		return err
@@ -595,26 +628,26 @@ func (p *P2PService) vote(nodeId *encoding.NodeId, upvote bool) error {
 	return nil
 }
 
-func (p *P2PService) NodeId() *encoding.NodeId {
+func (p *P2PServiceDefault) NodeId() *encoding.NodeId {
 	return p.localNodeID
 }
 
-func (p *P2PService) WaitOnConnectedPeers() {
+func (p *P2PServiceDefault) WaitOnConnectedPeers() {
 	p.connectionTracker.Wait()
 }
 
-func (p *P2PService) ConnectionTracker() *sync.WaitGroup {
+func (p *P2PServiceDefault) ConnectionTracker() *sync.WaitGroup {
 	return &p.connectionTracker
 }
 
-func (p *P2PService) NetworkId() string {
+func (p *P2PServiceDefault) NetworkId() string {
 	return p.networkID
 }
-func (n *P2PService) HashQueryRoutingTable() structs.Map {
+func (n *P2PServiceDefault) HashQueryRoutingTable() structs.Map {
 	return n.hashQueryRoutingTable
 }
 
-func (n *P2PService) Init(ctx context.Context) error {
+func (n *P2PServiceDefault) Init(ctx context.Context) error {
 	if n.nodeConfig.P2P == nil {
 		return errors.New("Nodeconfig is nil")
 	}
@@ -632,21 +665,21 @@ func (n *P2PService) Init(ctx context.Context) error {
 	}
 	return nil
 }
-func (n *P2PService) Stop(ctx context.Context) error {
+func (n *P2PServiceDefault) Stop(ctx context.Context) error {
 	return nil
 }
-func (n *P2PService) Logger() *zap.Logger {
+func (n *P2PServiceDefault) Logger() *zap.Logger {
 	return n.logger
 }
-func (n *P2PService) Config() *config.NodeConfig {
+func (n *P2PServiceDefault) Config() *config.NodeConfig {
 	return n.nodeConfig
 }
-func (n *P2PService) Db() db.KVStore {
+func (n *P2PServiceDefault) Db() db.KVStore {
 	return n.db
 }
-func (n *P2PService) Services() service.Services {
+func (n *P2PServiceDefault) Services() service.Services {
 	return nil
 }
-func (n *P2PService) SetServices(services service.Services) {
+func (n *P2PServiceDefault) SetServices(services service.Services) {
 	//noop
 }
