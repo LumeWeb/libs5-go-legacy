@@ -11,7 +11,6 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/service"
 	"go.lumeweb.com/libs5-go/pkg/storage"
 	"go.uber.org/zap"
-	_default "old/service/default"
 )
 
 // Node represents the main application node that coordinates all services
@@ -77,9 +76,9 @@ func DefaultNode(config *config.NodeConfig) (*Node, error) {
 	params := NodeParams{
 		Config:   config,
 		P2P:      p2p,
-		Registry: registry.NewRegistry(config, config.Logger, config.DB),
-		HTTP:     http.NewHTTP(config, config.Logger, config.DB),
-		Storage:  storage.NewStorage(config, config.Logger, config.DB),
+		Registry: registry.NewRegistry(config, config.Logger, config.DB, p2p),
+		HTTP:     http.NewHTTP(config, config.Logger, config.DB, p2p),
+		Storage:  storage.NewStorage(config, config.Logger, config.DB, p2p),
 	}
 
 	return NewNode(params)
@@ -101,17 +100,17 @@ func (n *Node) DB() kv.KVStore {
 }
 
 // P2P returns the P2P service instance
-func (n *Node) P2P() service.P2PService {
+func (n *Node) P2P() P2PService {
 	return n.p2p
 }
 
 // Registry returns the Registry service instance
-func (n *Node) Registry() service.RegistryService {
+func (n *Node) Registry() registry.RegistryService {
 	return n.registry
 }
 
 // HTTP returns the HTTP service instance
-func (n *Node) HTTP() service.HTTPService {
+func (n *Node) HTTP() http.HTTPService {
 	return n.http
 }
 
