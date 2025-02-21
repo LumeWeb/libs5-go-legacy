@@ -1,13 +1,11 @@
-package transport_test
+package transport
 
 import (
 	"context"
 	"net"
-	"net/url"
 	"testing"
 	"time"
 
-	"go.lumeweb.com/libs5-go/internal/transport"
 	"nhooyr.io/websocket"
 )
 
@@ -20,12 +18,12 @@ func TestWebSocketPeer_SendMessage(t *testing.T) {
 	clientConn, _ := websocket.NewClient(ctx, client, "ws://localhost")
 	serverConn, _ := websocket.NewServer(ctx, server, nil)
 
-	peer := &transport.WebSocketPeer{
+	peer := WebSocketPeer{
 		socket: serverConn,
 	}
 
 	testMsg := []byte("test message")
-	
+
 	t.Run("Successful send", func(t *testing.T) {
 		err := peer.SendMessage(testMsg)
 		if err != nil {
@@ -51,7 +49,7 @@ func TestWebSocketPeer_ListenForMessages(t *testing.T) {
 	clientConn, _ := websocket.NewClient(ctx, client, "ws://localhost")
 	serverConn, _ := websocket.NewServer(ctx, server, nil)
 
-	peer := &transport.WebSocketPeer{
+	peer := &WebSocketPeer{
 		socket: serverConn,
 	}
 
@@ -62,7 +60,7 @@ func TestWebSocketPeer_ListenForMessages(t *testing.T) {
 			return nil
 		}
 
-		go peer.ListenForMessages(callback, transport.ListenerOptions{})
+		go peer.ListenForMessages(callback, ListenerOptions{})
 
 		testMsg := []byte("test message")
 		err := clientConn.Write(ctx, websocket.MessageBinary, testMsg)
@@ -82,7 +80,7 @@ func TestWebSocketPeer_ListenForMessages(t *testing.T) {
 
 	t.Run("Connection closure", func(t *testing.T) {
 		closed := make(chan struct{})
-		options := transport.ListenerOptions{
+		options := ListenerOptions{
 			OnClose: func() { close(closed) },
 		}
 
