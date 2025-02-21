@@ -19,7 +19,7 @@ type Node struct {
 	p2p      P2PService
 	registry registry.RegistryService
 	http     http.HTTPService
-	storage  service.StorageService
+	storage  storage.StorageService
 	logger   *zap.Logger
 	db       kv.KVStore
 }
@@ -43,7 +43,7 @@ type NodeParams struct {
 	P2P      P2PService
 	Registry registry.RegistryService
 	HTTP     http.HTTPService
-	Storage  service.StorageService
+	Storage  storage.StorageService
 }
 
 // Start initializes and starts all services
