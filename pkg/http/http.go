@@ -26,12 +26,18 @@ type P2PNodeResponse struct {
 }
 
 type HTTPServiceDefault struct {
-	service.ServiceBase
+	logger *zap.Logger
+	config *config.NodeConfig
+	db     kv.KVStore
+	p2p    service.P2PService
 }
 
-func NewHTTP(params service.ServiceParams) *HTTPServiceDefault {
+func NewHTTP(config *config.NodeConfig, logger *zap.Logger, db kv.KVStore, p2p service.P2PService) *HTTPServiceDefault {
 	return &HTTPServiceDefault{
-		ServiceBase: service.NewServiceBase(params.Logger, params.Config, params.Db),
+		logger: logger,
+		config: config,
+		db:     db,
+		p2p:    p2p,
 	}
 }
 
@@ -124,19 +130,19 @@ func (h *HTTPServiceDefault) p2pHandler(w http.ResponseWriter, r *http.Request) 
 		peer.SetIP(&net.IPAddr{IP: clientIP})
 	}
 
-	h.Services().P2P().ConnectionTracker().Add(1)
+	h.p2p.ConnectionTracker().Add(1)
 
 	go func() {
-		err := h.Services().P2P().OnNewPeer(peer, false)
+		err := h.p2p.OnNewPeer(peer, false)
 		if err != nil {
-			h.Logger().Error("error handling new peer", zap.Error(err))
+			h.logger.Error("error handling new peer", zap.Error(err))
 		}
-		h.Services().P2P().ConnectionTracker().Done()
+		h.p2p.ConnectionTracker().Done()
 	}()
 }
 
 func (h *HTTPServiceDefault) p2pNodesHandler(w http.ResponseWriter, r *http.Request) {
-	localId, err := h.Services().P2P().NodeId().ToString()
+	localId, err := h.p2p.NodeId().ToString()
 
 	ctx := httputil.Context(r, w)
 
@@ -144,7 +150,7 @@ func (h *HTTPServiceDefault) p2pNodesHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	uris := h.Services().P2P().SelfConnectionUris()
+	uris := h.p2p.SelfConnectionUris()
 
 	nodeList := make([]P2PNodeResponse, len(uris))
 
@@ -160,7 +166,7 @@ func (h *HTTPServiceDefault) p2pNodesHandler(w http.ResponseWriter, r *http.Requ
 	})
 }
 func (h *HTTPServiceDefault) p2pPeersHandler(w http.ResponseWriter, r *http.Request) {
-	peers := h.Services().P2P().Peers().Values()
+	peers := h.p2p.Peers().Values()
 	peerList := make([]P2PNodeResponse, 0)
 
 	ctx := httputil.Context(r, w)
