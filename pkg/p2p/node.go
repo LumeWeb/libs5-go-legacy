@@ -115,6 +115,6 @@ func (n *Node) HTTP() http.HTTPService {
 }
 
 // Storage returns the Storage service instance
-func (n *Node) Storage() service.StorageService {
+func (n *Node) Storage() storage.StorageService {
 	return n.storage
 }
