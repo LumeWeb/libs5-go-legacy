@@ -111,7 +111,7 @@ func NewP2PService(cfg *config.NodeConfig, crypto crypto.CryptoImplementation, d
 	}, nil
 }
 
-func (p *P2PServiceDefault) Start(ctx context.Context) error {
+func (p *P2PServiceDefault) Start(_ context.Context) error {
 	cfg := p.nodeConfig
 	if len(cfg.P2P.Peers.Initial) > 0 {
 		initialPeers := cfg.P2P.Peers.Initial
