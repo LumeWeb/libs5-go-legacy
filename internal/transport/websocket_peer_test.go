@@ -2,7 +2,8 @@ package transport
 
 import (
 	"context"
-	"net"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -10,88 +11,140 @@ import (
 )
 
 func TestWebSocketPeer_SendMessage(t *testing.T) {
-	// Create in-memory WebSocket pair
+	t.Parallel()
+
+	// Create test server
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := websocket.Accept(w, r, nil)
+		if err != nil {
+			t.Fatal(err)
+			return
+		}
+		defer func() {
+			err := conn.Close(websocket.StatusInternalError, "")
+			if err != nil {
+				t.Error(err)
+			}
+		}()
+
+		// Read the test message
+		_, msg, err := conn.Read(context.Background())
+		if err != nil {
+			t.Fatal(err)
+			return
+		}
+		err = conn.Close(websocket.StatusNormalClosure, "")
+		if err != nil {
+			t.Error(err)
+		}
+
+		if string(msg) != "test message" {
+			t.Errorf("Expected 'test message', got %q", string(msg))
+		}
+	}))
+	defer s.Close()
+
+	// Connect client
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	client, server := net.Pipe()
-	clientConn, _ := websocket.NewClient(ctx, client, "ws://localhost")
-	serverConn, _ := websocket.NewServer(ctx, server, nil)
+	c, _, err := websocket.Dial(ctx, s.URL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		err := c.Close(websocket.StatusInternalError, "")
+		if err != nil {
+			t.Error(err)
+		}
+	}()
 
-	peer := WebSocketPeer{
-		socket: serverConn,
+	peer := &WebSocketPeer{
+		socket: c,
 	}
 
 	testMsg := []byte("test message")
+	if err := peer.SendMessage(testMsg); err != nil {
+		t.Fatal(err)
+	}
 
-	t.Run("Successful send", func(t *testing.T) {
-		err := peer.SendMessage(testMsg)
-		if err != nil {
-			t.Fatalf("SendMessage failed: %v", err)
-		}
-
-		_, msg, err := clientConn.Read(ctx)
-		if err != nil {
-			t.Fatalf("Failed to read message: %v", err)
-		}
-
-		if string(msg) != string(testMsg) {
-			t.Errorf("Expected %q, got %q", testMsg, msg)
-		}
-	})
+	err = c.Close(websocket.StatusNormalClosure, "")
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestWebSocketPeer_ListenForMessages(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	t.Parallel()
 
-	client, server := net.Pipe()
-	clientConn, _ := websocket.NewClient(ctx, client, "ws://localhost")
-	serverConn, _ := websocket.NewServer(ctx, server, nil)
-
-	peer := &WebSocketPeer{
-		socket: serverConn,
-	}
-
-	t.Run("Message reception", func(t *testing.T) {
-		received := make(chan []byte)
-		callback := func(msg []byte) error {
-			received <- msg
-			return nil
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := websocket.Accept(w, r, nil)
+		if err != nil {
+			t.Fatal(err)
+			return
 		}
+		defer func() {
+			err := conn.Close(websocket.StatusInternalError, "")
+			if err != nil {
+				t.Error(err)
+			}
+		}()
 
-		go peer.ListenForMessages(callback, ListenerOptions{})
-
-		testMsg := []byte("test message")
-		err := clientConn.Write(ctx, websocket.MessageBinary, testMsg)
+		// Send test message
+		err = conn.Write(context.Background(), websocket.MessageBinary, []byte("test message"))
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		select {
-		case msg := <-received:
-			if string(msg) != string(testMsg) {
-				t.Errorf("Expected %q, got %q", testMsg, msg)
-			}
-		case <-time.After(1 * time.Second):
-			t.Fatal("Timeout waiting for message")
+		// Wait briefly then close normally
+		time.Sleep(100 * time.Millisecond)
+		err = conn.Close(websocket.StatusNormalClosure, "")
+		if err != nil {
+			t.Error(err)
 		}
-	})
+	}))
+	defer s.Close()
 
-	t.Run("Connection closure", func(t *testing.T) {
-		closed := make(chan struct{})
-		options := ListenerOptions{
-			OnClose: func() { close(closed) },
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	c, _, err := websocket.Dial(ctx, s.URL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	peer := &WebSocketPeer{
+		socket: c,
+	}
+
+	received := make(chan []byte)
+	closed := make(chan struct{})
+
+	onClose := func() { close(closed) }
+	options := ListenerOptions{
+		OnClose: onClose,
+	}
+
+	go peer.ListenForMessages(func(msg []byte) error {
+		received <- msg
+		return nil
+	}, options)
+
+	// Test message reception
+	select {
+	case msg := <-received:
+		if string(msg) != "test message" {
+			t.Errorf("Expected 'test message', got %q", string(msg))
 		}
+	case <-time.After(time.Second):
+		t.Fatal("Timeout waiting for message")
+	}
 
-		go peer.ListenForMessages(func([]byte) error { return nil }, options)
-		clientConn.Close(websocket.StatusNormalClosure, "")
-
-		select {
-		case <-closed:
-			// Expected
-		case <-time.After(1 * time.Second):
-			t.Fatal("Timeout waiting for close callback")
-		}
-	})
+	// Test connection closure
+	select {
+	case <-closed:
+		// Expected
+	case <-time.After(time.Second):
+		t.Fatal("Timeout waiting for close callback")
+	}
 }
