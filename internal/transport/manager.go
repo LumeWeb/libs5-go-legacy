@@ -2,6 +2,7 @@ package transport
 
 import (
 	"context"
+	libs5_go "go.lumeweb.com/libs5-go"
 	libcrypto "go.lumeweb.com/libs5-go/pkg/crypto"
 	"go.lumeweb.com/libs5-go/pkg/encoding"
 	"net/url"
@@ -46,13 +47,13 @@ type DefaultManager struct {
 	logger       *zap.Logger
 	mutex        sync.RWMutex
 	challengeGen func() []byte // Challenge generator function
-	crypto       libcrypto.CryptoImplementation
+	crypto       libs5_go.CryptoImplementation
 }
 
 type ManagerOption func(*DefaultManager)
 
 // NewManager creates a transport manager with the given options
-func NewManager(keyPair *libcrypto.KeyPairEd25519, crypto libcrypto.CryptoImplementation, logger *zap.Logger, options ...ManagerOption) Manager {
+func NewManager(keyPair *libcrypto.KeyPairEd25519, crypto libs5_go.CryptoImplementation, logger *zap.Logger, options ...ManagerOption) Manager {
 	nodeID := encoding.NewNodeId(keyPair.PublicKey())
 
 	m := &DefaultManager{
@@ -63,13 +64,15 @@ func NewManager(keyPair *libcrypto.KeyPairEd25519, crypto libcrypto.CryptoImplem
 		transports: make(map[string]PeerFactory),
 		logger:     logger,
 		crypto:     crypto,
-		challengeGen: func() []byte {
-			challenge := make([]byte, 64)
-			// Generate random challenge and embed public key
-			crypto.GenerateSecureRandomBytes(64, challenge)
-			copy(challenge[31:], keyPair.PublicKeyRaw())
-			return challenge
-		},
+	}
+
+	m.challengeGen = func() []byte {
+		bytes, err := crypto.GenerateSecureRandomBytes(32)
+		if err != nil {
+			m.logger.Error("Failed to generate challenge", zap.Error(err))
+			return nil
+		}
+		return bytes
 	}
 
 	// Register default transports
