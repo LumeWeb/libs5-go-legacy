@@ -135,7 +135,7 @@ func (p *P2PServiceDefault) Start(_ context.Context) error {
 	return nil
 }
 
-func (p *P2PServiceDefault) ConnectToNode(connectionUris []*url.URL, retry uint, fromPeer net.Peer) error {
+func (p *P2PServiceDefault) ConnectToNode(connectionUris []*url.URL, retry uint, fromPeer transport.Peer) error {
 	if len(connectionUris) == 0 {
 		return errors.New("No connection URIs provided")
 	}
@@ -284,7 +284,7 @@ func (p *P2PServiceDefault) ConnectToNode(connectionUris []*url.URL, retry uint,
 			p.outgoingPeerFailures.Remove(idString)
 		}
 
-		peer, err := net.CreateTransportPeer(scheme, &net.TransportPeerConfig{
+		peer, err := transport.CreateTransportPeer(scheme, &transport.TransportPeerConfig{
 			Socket: socket,
 			Uris:   []*url.URL{connectionUri},
 		})
@@ -311,7 +311,7 @@ func (p *P2PServiceDefault) ConnectToNode(connectionUris []*url.URL, retry uint,
 	return errUnsupportedProtocol
 }
 
-func (p *P2PServiceDefault) OnNewPeer(peer net.Peer, verifyId bool) error {
+func (p *P2PServiceDefault) OnNewPeer(peer transport.Peer, verifyId bool) error {
 	var wg sync.WaitGroup
 
 	var pid string
@@ -369,7 +369,7 @@ func (p *P2PServiceDefault) OnNewPeer(peer net.Peer, verifyId bool) error {
 	return nil
 }
 
-func (p *P2PServiceDefault) OnNewPeerListen(peer net.Peer, verifyId bool) {
+func (p *P2PServiceDefault) OnNewPeerListen(peer transport.Peer, verifyId bool) {
 	onDone := func() {
 		if peer.Id() != nil {
 			pid, err := peer.Id().ToString()
@@ -408,7 +408,7 @@ func (p *P2PServiceDefault) OnNewPeerListen(peer net.Peer, verifyId bool) {
 		}
 
 		if handler.RequiresHandshake() && !peer.IsHandshakeDone() {
-			p.logger.Debug("Peer is not handshake done, ignoring message", zap.Any("type", protocol.ProtocolMethodMap[types.ProtocolMethod(reader.Kind)]))
+			p.logger.Debug("Peer is not handshake done, ignoring message", zap.Any("type", protocol.ProtocolMethodMap[protocol.ProtocolMethod(reader.Kind)]))
 			return nil
 		}
 
@@ -442,9 +442,9 @@ func (p *P2PServiceDefault) OnNewPeerListen(peer net.Peer, verifyId bool) {
 		}
 
 		return nil
-	}, net.ListenerOptions{
-		OnClose: &onDone,
-		OnError: &onError,
+	}, transport.ListenerOptions{
+		OnClose: onDone,
+		OnError: onError,
 		Logger:  p.logger,
 	})
 }
@@ -545,7 +545,7 @@ func (p *P2PServiceDefault) SignMessageSimple(message []byte) ([]byte, error) {
 	return result, nil
 }
 
-func (p *P2PServiceDefault) AddPeer(peer net.Peer) error {
+func (p *P2PServiceDefault) AddPeer(peer transport.Peer) error {
 	peerId, err := peer.Id().ToString()
 	if err != nil {
 		return err
@@ -554,7 +554,7 @@ func (p *P2PServiceDefault) AddPeer(peer net.Peer) error {
 
 	return nil
 }
-func (p *P2PServiceDefault) SendPublicPeersToPeer(peer net.Peer, peersToSend []net.Peer) error {
+func (p *P2PServiceDefault) SendPublicPeersToPeer(peer transport.Peer, peersToSend []transport.Peer) error {
 	announceRequest := protocol.NewAnnounceRequest(peer, peersToSend)
 
 	message, err := msgpack.Marshal(announceRequest)
@@ -573,7 +573,7 @@ func (p *P2PServiceDefault) SendPublicPeersToPeer(peer net.Peer, peersToSend []n
 
 	return nil
 }
-func (p *P2PServiceDefault) SendHashRequest(hash *encoding.Multihash, kinds []types.StorageLocationType) error {
+func (p *P2PServiceDefault) SendHashRequest(hash *encoding.Multihash, kinds []storage.StorageLocationType) error {
 	hashRequest := protocol.NewHashRequest(hash, kinds)
 	message, err := msgpack.Marshal(hashRequest)
 	if err != nil {
@@ -581,9 +581,9 @@ func (p *P2PServiceDefault) SendHashRequest(hash *encoding.Multihash, kinds []ty
 	}
 
 	for _, peer := range p.peers.Values() {
-		peerValue, ok := peer.(net.Peer)
+		peerValue, ok := peer.(transport.Peer)
 		if !ok {
-			p.logger.Error("failed to cast peer to net.Peer")
+			p.logger.Error("failed to cast peer to transport.Peer")
 			continue
 		}
 		err = peerValue.SendMessage(message)

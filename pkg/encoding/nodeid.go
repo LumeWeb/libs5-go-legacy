@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/multiformats/go-multibase"
+	libbytes "go.lumeweb.com/libs5-go/pkg/bytes"
 	"go.lumeweb.com/libs5-go/pkg/internal"
 )
 
@@ -72,4 +73,7 @@ func (nodeId *NodeId) Raw() []byte {
 	result := make([]byte, len(nodeId.bytes))
 	copy(result, nodeId.bytes)
 	return result
+}
+func (nodeId *NodeId) HashCode() int {
+	return libbytes.HashCode(nodeId.bytes[:4])
 }
