@@ -2,25 +2,33 @@ package service
 
 import (
 	"context"
+	"go.lumeweb.com/libs5-go/pkg/config"
 	"go.lumeweb.com/libs5-go/pkg/encoding"
+	"go.lumeweb.com/libs5-go/pkg/kv"
+	"go.lumeweb.com/libs5-go/pkg/registry"
+	"go.lumeweb.com/libs5-go/pkg/storage"
 	"go.lumeweb.com/libs5-go/pkg/structs"
+	"go.lumeweb.com/libs5-go/pkg/transport"
 	"go.uber.org/zap"
 	"net/http"
 	"net/url"
+	"old/metadata"
+	"old/net"
+	"old/types"
 	"sync"
 )
 
 type P2PService interface {
 	SelfConnectionUris() []*url.URL
 	Peers() structs.Map
-	ConnectToNode(connectionUris []*url.URL, retry uint, fromPeer net.Peer) error
-	OnNewPeer(peer net.Peer, verifyId bool) error
+	ConnectToNode(connectionUris []*url.URL, retry uint, fromPeer transport.Peer) error
+	OnNewPeer(peer transport.Peer, verifyId bool) error
 	GetNodeScore(nodeId *encoding.NodeId) (float64, error)
 	SortNodesByScore(nodes []*encoding.NodeId) ([]*encoding.NodeId, error)
 	SignMessageSimple(message []byte) ([]byte, error)
-	AddPeer(peer net.Peer) error
-	SendPublicPeersToPeer(peer net.Peer, peersToSend []net.Peer) error
-	SendHashRequest(hash *encoding.Multihash, kinds []types.StorageLocationType) error
+	AddPeer(peer transport.Peer) error
+	SendPublicPeersToPeer(peer transport.Peer, peersToSend []transport.Peer) error
+	SendHashRequest(hash *encoding.Multihash, kinds []storage.StorageLocationType) error
 	UpVote(nodeId *encoding.NodeId) error
 	DownVote(nodeId *encoding.NodeId) error
 	NodeId() *encoding.NodeId
@@ -34,22 +42,22 @@ type P2PService interface {
 	SetServices(services Services)
 	Logger() *zap.Logger
 	Config() *config.NodeConfig
-	Db() db.KVStore
+	Db() kv.KVStore
 }
 
 type RegistryService interface {
-	Set(sre protocol.SignedRegistryEntry, trusted bool, receivedFrom net.Peer) error
-	BroadcastEntry(sre protocol.SignedRegistryEntry, receivedFrom net.Peer) error
+	Set(sre registry.SignedRegistryEntry, trusted bool, receivedFrom transport.Peer) error
+	BroadcastEntry(sre registry.SignedRegistryEntry, receivedFrom transport.Peer) error
 	SendRegistryRequest(pk []byte) error
-	Get(pk []byte) (protocol.SignedRegistryEntry, error)
-	Listen(pk []byte, cb func(sre protocol.SignedRegistryEntry)) (func(), error)
+	Get(pk []byte) (registry.SignedRegistryEntry, error)
+	Listen(pk []byte, cb func(sre registry.SignedRegistryEntry)) (func(), error)
 	Init(ctx context.Context) error
 	Stop(ctx context.Context) error
 	Start(ctx context.Context) error
 	SetServices(services Services)
 	Logger() *zap.Logger
 	Config() *config.NodeConfig
-	Db() db.KVStore
+	Db() kv.KVStore
 }
 
 type HTTPService interface {
@@ -60,11 +68,11 @@ type HTTPService interface {
 	SetServices(services Services)
 	Logger() *zap.Logger
 	Config() *config.NodeConfig
-	Db() db.KVStore
+	Db() kv.KVStore
 }
 
 type StorageService interface {
-	GetCachedStorageLocations(hash *encoding.Multihash, kinds []types.StorageLocationType, local bool) (map[string]storage.StorageLocation, error)
+	GetCachedStorageLocations(hash *encoding.Multihash, kinds []storage.StorageLocationType, local bool) (map[string]storage.StorageLocation, error)
 	AddStorageLocation(hash *encoding.Multihash, nodeId *encoding.NodeId, location storage.StorageLocation, message []byte) error
 	DownloadBytesByHash(hash *encoding.Multihash) ([]byte, error)
 	DownloadBytesByCID(cid *encoding.CID) ([]byte, error)
@@ -78,7 +86,7 @@ type StorageService interface {
 	SetServices(services Services)
 	Logger() *zap.Logger
 	Config() *config.NodeConfig
-	Db() db.KVStore
+	Db() kv.KVStore
 }
 
 type Service interface {
@@ -87,7 +95,7 @@ type Service interface {
 	Init(ctx context.Context) error
 	Logger() *zap.Logger
 	Config() *config.NodeConfig
-	Db() db.KVStore
+	Db() kv.KVStore
 	SetServices(services Services)
 }
 
@@ -110,17 +118,17 @@ type Services interface {
 type ServiceParams struct {
 	Logger *zap.Logger
 	Config *config.NodeConfig
-	Db     db.KVStore
+	Db     kv.KVStore
 }
 
 type ServiceBase struct {
 	logger   *zap.Logger
 	config   *config.NodeConfig
-	db       db.KVStore
+	db       kv.KVStore
 	services Services
 }
 
-func NewServiceBase(logger *zap.Logger, config *config.NodeConfig, db db.KVStore) ServiceBase {
+func NewServiceBase(logger *zap.Logger, config *config.NodeConfig, db kv.KVStore) ServiceBase {
 	return ServiceBase{logger: logger, config: config, db: db}
 }
 
@@ -136,6 +144,6 @@ func (s *ServiceBase) Logger() *zap.Logger {
 func (s *ServiceBase) Config() *config.NodeConfig {
 	return s.config
 }
-func (s *ServiceBase) Db() db.KVStore {
+func (s *ServiceBase) Db() kv.KVStore {
 	return s.db
 }
