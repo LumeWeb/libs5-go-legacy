@@ -50,11 +50,14 @@ func (r *RegistryServiceDefault) Init(ctx context.Context) error {
 	return nil
 }
 
-func NewRegistry(params service.ServiceParams) *RegistryServiceDefault {
+func NewRegistry(config *config.NodeConfig, logger *zap.Logger, db kv.KVStore, p2p service.P2PService) *RegistryServiceDefault {
 	return &RegistryServiceDefault{
-		streams:     structs.NewMap(),
-		subs:        structs.NewMap(),
-		ServiceBase: service.NewServiceBase(params.Logger, params.Config, params.Db),
+		streams: structs.NewMap(),
+		subs:    structs.NewMap(),
+		logger:  logger,
+		config:  config,
+		db:      db,
+		p2p:     p2p,
 	}
 }
 func (r *RegistryServiceDefault) Set(sre protocol.SignedRegistryEntry, trusted bool, receivedFrom net.Peer) error {
