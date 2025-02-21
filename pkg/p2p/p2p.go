@@ -11,7 +11,6 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/transport"
 	"net/url"
 	"old/net"
-	"old/types"
 	"sort"
 	"sync"
 	"time"
@@ -258,7 +257,7 @@ func (p *P2PServiceDefault) ConnectToNode(connectionUris []*url.URL, retry uint,
 				return nil
 			}
 
-			if errors.Is(err, net.ErrTransportNotSupported) {
+			if errors.Is(err, transport.ErrTransportNotSupported) {
 				p.logger.Debug("failed to connect, unsupported transport", zap.String("node", connectionUri.String()), zap.Error(err))
 				return err
 			}
