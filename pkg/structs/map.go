@@ -1,18 +1,20 @@
 package structs
 
 import (
+	"encoding/json"
+	"fmt"
+	"sync"
+
 	"github.com/emirpasic/gods/maps"
 	"github.com/emirpasic/gods/maps/hashmap"
-	"log"
-	"sync"
 )
 
 var _ maps.Map = (*MapImpl)(nil)
 
 type Map interface {
-	GetInt(key interface{}) (value *int)
-	GetUInt(key interface{}) (value *uint)
-	GetString(key interface{}) (value *string)
+	GetInt(key interface{}) (value *int, err error)
+	GetUInt(key interface{}) (value *uint, err error)
+	GetString(key interface{}) (value *string, err error)
 	PutInt(key interface{}, value int)
 	PutUInt(key interface{}, value uint)
 	Contains(value interface{}) bool
@@ -37,52 +39,52 @@ func (m *MapImpl) Get(key interface{}) (value interface{}, found bool) {
 	return m.Map.Get(key)
 }
 
-func (m *MapImpl) GetInt(key interface{}) (value *int) {
+func (m *MapImpl) GetInt(key interface{}) (value *int, err error) {
 	val, found := m.Get(key)
 
 	if !found {
-		return nil
+		return nil, nil // Not found is not an error
 	}
 
 	if intValue, ok := val.(int); ok {
 		value = &intValue
 	} else {
-		log.Fatalf("value is not an int: %v", val)
+		return nil, fmt.Errorf("value is not an int: %v", val) // Return an error instead of fatal
 	}
 
-	return value
+	return value, nil
 }
 
-func (m *MapImpl) GetUInt(key interface{}) (value *uint) {
+func (m *MapImpl) GetUInt(key interface{}) (value *uint, err error) {
 	val, found := m.Get(key)
 
 	if !found {
-		return nil
+		return nil, nil
 	}
 
 	if intValue, ok := val.(uint); ok {
 		value = &intValue
 	} else {
-		log.Fatalf("value is not an uint: %v", val)
+		return nil, fmt.Errorf("value is not an uint: %v", val)
 	}
 
-	return value
+	return value, nil
 }
 
-func (m *MapImpl) GetString(key interface{}) (value *string) {
+func (m *MapImpl) GetString(key interface{}) (value *string, err error) {
 	val, found := m.Get(key)
 
 	if !found {
-		return nil
+		return nil, nil
 	}
 
-	if _, ok := val.(string); ok {
-		value = val.(*string)
+	if strValue, ok := val.(string); ok {
+		value = &strValue
 	} else {
-		log.Fatalf("value is not a string: %v", value)
+		return nil, fmt.Errorf("value is not a string: %v", val)
 	}
 
-	return
+	return value, nil
 }
 
 func (m *MapImpl) Put(key interface{}, value interface{}) {
@@ -138,13 +140,33 @@ func (m *MapImpl) Clear() {
 func (m *MapImpl) String() string {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
-	return m.Map.String()
+
+	// Build a Go map for JSON marshaling.
+	goMap := make(map[string]interface{})
+	for _, key := range m.Keys() {
+		val, _ := m.Get(key) // Ignoring found here, keys are guaranteed to exist
+		goMap[fmt.Sprintf("%v", key)] = val
+	}
+
+	// Convert the map to JSON
+	jsonBytes, err := json.Marshal(goMap)
+	if err != nil {
+		return fmt.Sprintf("Error converting to JSON: %v", err)
+	}
+	return string(jsonBytes)
 }
 
 func (m *MapImpl) GetKey(value interface{}) (key interface{}, found bool) {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
-	return m.Map.Get(value)
+
+	for _, k := range m.Keys() {
+		val, _ := m.Get(k)
+		if val == value {
+			return k, true
+		}
+	}
+	return nil, false
 }
 
 func (m *MapImpl) Contains(value interface{}) bool {
