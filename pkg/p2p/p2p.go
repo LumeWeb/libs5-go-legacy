@@ -192,7 +192,10 @@ func (p *P2PServiceDefault) ConnectToNode(connectionUris []*url.URL, retry uint,
 			return nil
 		}
 
-		reconnectDelay := p.reconnectDelay.GetUInt(idString)
+		reconnectDelay, err := p.reconnectDelay.GetUInt(idString)
+		if err != nil {
+			return err
+		}
 		if reconnectDelay == nil {
 			delay := uint(1)
 			reconnectDelay = &delay
@@ -211,8 +214,11 @@ func (p *P2PServiceDefault) ConnectToNode(connectionUris []*url.URL, retry uint,
 				p.logger.Error("failed to connect, too many retries", zap.String("node", connectionUri.String()), zap.Error(err))
 				counter := uint(0)
 				if p.outgoingPeerFailures.Contains(idString) {
-					tmp := *p.outgoingPeerFailures.GetUInt(idString)
-					counter = tmp
+					tmp, err := p.outgoingPeerFailures.GetUInt(idString)
+					if err != nil {
+						return err
+					}
+					counter = *tmp
 				}
 
 				counter++
@@ -265,7 +271,10 @@ func (p *P2PServiceDefault) ConnectToNode(connectionUris []*url.URL, retry uint,
 
 			p.logger.Error("failed to connect", zap.String("node", connectionUri.String()), zap.Error(err))
 
-			delay := p.reconnectDelay.GetUInt(idString)
+			delay, err := p.reconnectDelay.GetUInt(idString)
+			if err != nil {
+				return err
+			}
 			if delay == nil {
 				tmp := uint(1)
 				delay = &tmp
