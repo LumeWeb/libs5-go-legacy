@@ -10,6 +10,7 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/encoding"
 	"go.lumeweb.com/libs5-go/pkg/kv"
 	"go.lumeweb.com/libs5-go/pkg/p2p"
+	"go.lumeweb.com/libs5-go/pkg/storage/location"
 	"go.lumeweb.com/libs5-go/pkg/structs"
 	"go.uber.org/zap"
 	"io"
@@ -26,7 +27,7 @@ var (
 )
 
 type StorageService interface {
-	GetCachedStorageLocations(hash *encoding.Blob, kinds []StorageLocationType, local bool) (map[string]StorageLocation, error)
+	GetCachedStorageLocations(hash *encoding.Blob, kinds []location.StorageLocationType, local bool) (map[string]StorageLocation, error)
 	AddStorageLocation(hash *encoding.Blob, nodeId *encoding.NodeId, location StorageLocation, message []byte) error
 	DownloadBytesByHash(hash *encoding.Blob) ([]byte, error)
 	DownloadBytesByCID(cid *encoding.CID) ([]byte, error)
@@ -105,7 +106,7 @@ func (n *StorageServiceDefault) ProviderStore() ProviderStore {
 	return n.providerStore
 }
 
-func (s *StorageServiceDefault) GetCachedStorageLocations(hash *encoding.Blob, kinds []StorageLocationType, local bool) (map[string]StorageLocation, error) {
+func (s *StorageServiceDefault) GetCachedStorageLocations(hash *encoding.Blob, kinds []location.StorageLocationType, local bool) (map[string]StorageLocation, error) {
 	locations := make(map[string]StorageLocation)
 
 	locationMap, err := s.readStorageLocationsFromDB(hash)
@@ -173,7 +174,7 @@ func (s *StorageServiceDefault) GetCachedStorageLocations(hash *encoding.Blob, k
 	return locations, nil
 }
 
-func (s *StorageServiceDefault) getLocalStorageLocation(hash *encoding.Blob, kinds []StorageLocationType) StorageLocation {
+func (s *StorageServiceDefault) getLocalStorageLocation(hash *encoding.Blob, kinds []location.StorageLocationType) StorageLocation {
 	if s.providerStore != nil {
 		if s.providerStore.CanProvide(hash, kinds) {
 			location, _ := s.providerStore.Provide(hash, kinds)
@@ -260,9 +261,9 @@ func (s *StorageServiceDefault) DownloadBytesByHash(hash *encoding.Blob) ([]byte
 		P2P:     s.p2p,
 		Storage: s,
 		Hash:    hash,
-		LocationTypes: []StorageLocationType{
-			StorageLocationTypeFull,
-			StorageLocationTypeFile,
+		LocationTypes: []location.StorageLocationType{
+			location.StorageLocationTypeFull,
+			location.StorageLocationTypeFile,
 		},
 		Logger: s.logger,
 	})

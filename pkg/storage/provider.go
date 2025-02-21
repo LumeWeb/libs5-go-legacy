@@ -6,6 +6,7 @@ import (
 	"github.com/samber/lo"
 	"go.lumeweb.com/libs5-go/pkg/encoding"
 	"go.lumeweb.com/libs5-go/pkg/p2p"
+	"go.lumeweb.com/libs5-go/pkg/storage/location"
 	"go.uber.org/zap"
 	"sync"
 	"time"
@@ -17,7 +18,7 @@ type StorageLocationProviderImpl struct {
 	p2p             p2p.P2PService
 	storage         StorageService
 	hash            *encoding.Blob
-	types           []StorageLocationType
+	types           []location.StorageLocationType
 	timeoutDuration time.Duration
 	availableNodes  []*encoding.NodeId
 	uris            map[string]StorageLocation
@@ -216,8 +217,8 @@ func (s *StorageLocationProviderImpl) Downvote(uri SignedStorageLocation) error 
 
 func NewStorageLocationProvider(params StorageLocationProviderParams) *StorageLocationProviderImpl {
 	if params.LocationTypes == nil {
-		params.LocationTypes = []StorageLocationType{
-			StorageLocationTypeFull,
+		params.LocationTypes = []location.StorageLocationType{
+			location.StorageLocationTypeFull,
 		}
 	}
 
@@ -245,7 +246,7 @@ type StorageLocationProviderParams struct {
 	P2P           p2p.P2PService
 	Storage       StorageService
 	Hash          *encoding.Blob
-	LocationTypes []StorageLocationType
+	LocationTypes []location.StorageLocationType
 	ExcludeNodes  []*encoding.NodeId
 	Logger        *zap.Logger
 }

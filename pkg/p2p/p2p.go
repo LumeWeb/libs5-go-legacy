@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"go.lumeweb.com/libs5-go/pkg/config"
 	"go.lumeweb.com/libs5-go/pkg/kv"
-	"go.lumeweb.com/libs5-go/pkg/storage"
+	"go.lumeweb.com/libs5-go/pkg/storage/location"
 	"go.lumeweb.com/libs5-go/pkg/transport"
 	"go.lumeweb.com/libs5-go/pkg/vote"
 	"net/url"
@@ -42,7 +42,7 @@ type P2PService interface {
 	SignMessageSimple(message []byte) ([]byte, error)
 	AddPeer(peer transport.Peer) error
 	SendPublicPeersToPeer(peer transport.Peer, peersToSend []transport.Peer) error
-	SendHashRequest(hash *encoding.Blob, kinds []storage.StorageLocationType) error
+	SendHashRequest(hash *encoding.Blob, kinds []location.StorageLocationType) error
 	UpVote(nodeId *encoding.NodeId) error
 	DownVote(nodeId *encoding.NodeId) error
 	NodeId() *encoding.NodeId
@@ -566,7 +566,7 @@ func (p *P2PServiceDefault) SendPublicPeersToPeer(peer transport.Peer, peersToSe
 
 	return nil
 }
-func (p *P2PServiceDefault) SendHashRequest(hash *encoding.Blob, kinds []storage.StorageLocationType) error {
+func (p *P2PServiceDefault) SendHashRequest(hash *encoding.Blob, kinds []location.StorageLocationType) error {
 	hashRequest := protocol.NewHashRequest(hash, kinds)
 	message, err := msgpack.Marshal(hashRequest)
 	if err != nil {
