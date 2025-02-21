@@ -5,6 +5,7 @@ go 1.23.1
 toolchain go1.23.6
 
 require (
+	github.com/emirpasic/gods v1.18.1
 	github.com/multiformats/go-multibase v0.2.0
 	github.com/stretchr/testify v1.8.4
 	github.com/vmihailenco/msgpack/v5 v5.4.1
