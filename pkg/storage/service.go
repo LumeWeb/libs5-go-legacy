@@ -24,21 +24,27 @@ var (
 
 type StorageService struct {
 	metadataCache structs.Map
-	providerStore storage.ProviderStore
-	bucket        db.KVStore
-	service.ServiceBase
+	providerStore ProviderStore
+	bucket        kv.KVStore
+	logger        *zap.Logger
+	config        *config.NodeConfig
+	db            kv.KVStore
+	p2p           service.P2PService
 }
 
-func NewStorage(params service.ServiceParams) *StorageService {
+func NewStorage(config *config.NodeConfig, logger *zap.Logger, db kv.KVStore, p2p service.P2PService) *StorageService {
 	return &StorageService{
 		metadataCache: structs.NewMap(),
-		ServiceBase:   service.NewServiceBase(params.Logger, params.Config, params.Db),
+		logger:        logger,
+		config:        config,
+		db:            db,
+		p2p:           p2p,
 	}
 }
 
 func (s *StorageService) Start(ctx context.Context) error {
 
-	bucket, err := s.Db().Bucket(cacheBucketName)
+	bucket, err := s.db.Bucket(cacheBucketName)
 	if err != nil {
 		return err
 	}

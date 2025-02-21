@@ -32,7 +32,7 @@ func (r *RegistryServiceDefault) Stop(ctx context.Context) error {
 }
 
 func (r *RegistryServiceDefault) Init(ctx context.Context) error {
-	bucket, err := r.Db().Bucket(registryBucketName)
+	bucket, err := r.db.Bucket(registryBucketName)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (r *RegistryServiceDefault) Set(sre protocol.SignedRegistryEntry, trusted b
 
 	return nil
 }
-func (r *RegistryServiceDefault) BroadcastEntry(sre protocol.SignedRegistryEntry, receivedFrom net.Peer) error {
+func (r *RegistryServiceDefault) BroadcastEntry(sre protocol.SignedRegistryEntry, receivedFrom transport.Peer) error {
 	hash := encoding.NewMultihash(sre.PK())
 	hashString, err := hash.ToString()
 	if err != nil {
@@ -146,8 +146,8 @@ func (r *RegistryServiceDefault) BroadcastEntry(sre protocol.SignedRegistryEntry
 	r.Logger().Debug("[registry] broadcastEntry", zap.String("pk", hashString), zap.Uint64("revision", sre.Revision()), zap.String("receivedFrom", pid))
 	updateMessage := protocol.MarshalSignedRegistryEntry(sre)
 
-	for _, p := range r.Services().P2P().Peers().Values() {
-		peer, ok := p.(net.Peer)
+	for _, p := range r.p2p.Peers().Values() {
+		peer, ok := p.(transport.Peer)
 		if !ok {
 			continue
 		}
