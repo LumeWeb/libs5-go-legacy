@@ -13,12 +13,18 @@ import (
 	"net/http"
 	"net/url"
 	"old/metadata"
-	"old/net"
-	"old/types"
 	"sync"
 )
 
+// BaseService defines the common operations all services must implement
+type BaseService interface {
+	Start(ctx context.Context) error
+	Stop(ctx context.Context) error
+	Init(ctx context.Context) error
+}
+
 type P2PService interface {
+	BaseService
 	SelfConnectionUris() []*url.URL
 	Peers() structs.Map
 	ConnectToNode(connectionUris []*url.URL, retry uint, fromPeer transport.Peer) error
@@ -89,61 +95,3 @@ type StorageService interface {
 	Db() kv.KVStore
 }
 
-type Service interface {
-	Start(ctx context.Context) error
-	Stop(ctx context.Context) error
-	Init(ctx context.Context) error
-	Logger() *zap.Logger
-	Config() *config.NodeConfig
-	Db() kv.KVStore
-	SetServices(services Services)
-}
-
-type ServicesSetter interface {
-	SetServices(services Services)
-}
-type Services interface {
-	P2P() P2PService
-	Registry() RegistryService
-	HTTP() HTTPService
-	Storage() StorageService
-	All() []Service
-	Init(ctx context.Context) error
-	IsStarted() bool
-	IsStarting() bool
-	Start(ctx context.Context) error
-	Stop(ctx context.Context) error
-}
-
-type ServiceParams struct {
-	Logger *zap.Logger
-	Config *config.NodeConfig
-	Db     kv.KVStore
-}
-
-type ServiceBase struct {
-	logger   *zap.Logger
-	config   *config.NodeConfig
-	db       kv.KVStore
-	services Services
-}
-
-func NewServiceBase(logger *zap.Logger, config *config.NodeConfig, db kv.KVStore) ServiceBase {
-	return ServiceBase{logger: logger, config: config, db: db}
-}
-
-func (s *ServiceBase) SetServices(services Services) {
-	s.services = services
-}
-func (s *ServiceBase) Services() Services {
-	return s.services
-}
-func (s *ServiceBase) Logger() *zap.Logger {
-	return s.logger
-}
-func (s *ServiceBase) Config() *config.NodeConfig {
-	return s.config
-}
-func (s *ServiceBase) Db() kv.KVStore {
-	return s.db
-}

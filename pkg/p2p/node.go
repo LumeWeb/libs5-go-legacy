@@ -12,93 +12,106 @@ import (
 	_default "old/service/default"
 )
 
+// Node represents the main application node that coordinates all services
 type Node struct {
-	nodeConfig      *config.NodeConfig
-	p2pService      service.P2PService
-	registryService service.RegistryService
-	httpService     service.HTTPService
-	storageService  service.StorageService
-
-	logger *zap.Logger
-	db     kv.KVStore
+	config   *config.NodeConfig
+	p2p      service.P2PService
+	registry service.RegistryService
+	http     service.HTTPService
+	storage  service.StorageService
+	logger   *zap.Logger
+	db       kv.KVStore
 }
 
-func NewNode(cfg *config.NodeConfig, p2p service.P2PService, registry service.RegistryService, http service.HTTPService, storage service.StorageService) (*Node, error) {
-	node := &Node{
-		nodeConfig:      cfg,
-		p2pService:      p2p,
-		registryService: registry,
-		httpService:     http,
-		storageService:  storage,
-		logger:          cfg.Logger,
-		db:              cfg.DB,
-	}
-
-	return node, nil
+// NewNode creates a new Node instance with all required services
+func NewNode(params NodeParams) (*Node, error) {
+	return &Node{
+		config:   params.Config,
+		p2p:      params.P2P,
+		registry: params.Registry,
+		http:     params.HTTP,
+		storage:  params.Storage,
+		logger:   params.Config.Logger,
+		db:       params.Config.DB,
+	}, nil
 }
-func (n *Node) Start(ctx context.Context) error { // This start just starts the service now
+
+// NodeParams contains all dependencies needed to create a new Node
+type NodeParams struct {
+	Config   *config.NodeConfig
+	P2P      service.P2PService
+	Registry service.RegistryService
+	HTTP     service.HTTPService
+	Storage  service.StorageService
+}
+// Start initializes and starts all services
+func (n *Node) Start(ctx context.Context) error {
 	protocol.RegisterProtocols()
-	protocol.RegisterSignedProtocols() // You may have to move this elsewhere?
+	protocol.RegisterSignedProtocols()
 
-	err := n.p2pService.Start(ctx)
-	if err != nil {
-		return err
+	services := []service.BaseService{
+		n.p2p,
+		n.registry,
+		n.http,
+		n.storage,
 	}
 
-	err = n.registryService.Start(ctx)
-	if err != nil {
-		return err
-	}
-	err = n.httpService.Start(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = n.storageService.Start(ctx)
-	if err != nil {
-		return err
+	for _, svc := range services {
+		if err := svc.Start(ctx); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func (n *Node) GetP2PService() service.P2PService {
-	return n.p2pService
-}
-
+// DefaultNode creates a new Node with default service implementations
 func DefaultNode(config *config.NodeConfig) (*Node, error) {
-	params := service.ServiceParams{
-		Logger: config.Logger,
-		Config: config,
-		Db:     config.DB,
-	}
-
-	// Initialize services first
-	p2pService, err := NewP2PService(config, crypto.NewDefaultCrypto(), config.DB, config.Logger, nil)
+	p2p, err := NewP2PService(config, crypto.NewDefaultCrypto(), config.DB, config.Logger, nil)
 	if err != nil {
 		return nil, err
 	}
-	registryService := registry.NewRegistry(params)
-	httpService := _default.NewHTTP(params)
-	storageService := _default.NewStorage(params)
 
-	// Now create the node with the services
-	return NewNode(config, p2pService, registryService, httpService, storageService)
+	params := NodeParams{
+		Config:   config,
+		P2P:      p2p,
+		Registry: registry.NewRegistry(config, config.Logger, config.DB),
+		HTTP:     _default.NewHTTP(config, config.Logger, config.DB),
+		Storage:  _default.NewStorage(config, config.Logger, config.DB),
+	}
+
+	return NewNode(params)
 }
+// Logger returns the node's logger instance
 func (n *Node) Logger() *zap.Logger {
-	return n.nodeConfig.Logger
+	return n.logger
 }
-func (n *Node) GetRegistryService() service.RegistryService {
-	return n.registryService
-}
-func (n *Node) GetHTTPService() service.HTTPService {
-	return n.httpService
-}
-func (n *Node) GetStorageService() service.StorageService {
-	return n.storageService
-}
+
+// Config returns the node's configuration
 func (n *Node) Config() *config.NodeConfig {
-	return n.nodeConfig
+	return n.config
 }
-func (n *Node) GetDB() kv.KVStore {
-	return n.nodeConfig.DB
+
+// DB returns the node's database instance
+func (n *Node) DB() kv.KVStore {
+	return n.db
+}
+
+// P2P returns the P2P service instance
+func (n *Node) P2P() service.P2PService {
+	return n.p2p
+}
+
+// Registry returns the Registry service instance
+func (n *Node) Registry() service.RegistryService {
+	return n.registry
+}
+
+// HTTP returns the HTTP service instance
+func (n *Node) HTTP() service.HTTPService {
+	return n.http
+}
+
+// Storage returns the Storage service instance
+func (n *Node) Storage() service.StorageService {
+	return n.storage
 }
