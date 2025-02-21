@@ -154,7 +154,7 @@ func (r *RegistryServiceDefault) Set(sre registry.SignedRegistryEntry, trusted b
 
 	return nil
 }
-func (r *RegistryServiceDefault) BroadcastEntry(sre protocol.SignedRegistryEntry, receivedFrom transport.Peer) error {
+func (r *RegistryServiceDefault) BroadcastEntry(sre registry.SignedRegistryEntry, receivedFrom transport.Peer) error {
 	hash := encoding.NewMultihash(sre.PK())
 	hashString, err := hash.ToString()
 	if err != nil {
