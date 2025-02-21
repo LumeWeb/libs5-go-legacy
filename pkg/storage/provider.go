@@ -14,24 +14,25 @@ import (
 var _ StorageLocationProvider = (*StorageLocationProviderImpl)(nil)
 
 type StorageLocationProviderImpl struct {
-	services        service.Services
-	hash            *encoding.Multihash
-	types           []StorageLocationType
+	p2p            service.P2PService
+	storage        service.StorageService
+	hash           *encoding.Multihash
+	types          []StorageLocationType
 	timeoutDuration time.Duration
-	availableNodes  []*encoding.NodeId
-	uris            map[string]StorageLocation
-	timeout         time.Time
-	isTimedOut      bool
+	availableNodes []*encoding.NodeId
+	uris           map[string]StorageLocation
+	timeout        time.Time
+	isTimedOut     bool
 	isWaitingForUri bool
-	mutex           sync.Mutex
-	logger          *zap.Logger
-	excludeNodes    []*encoding.NodeId
+	mutex          sync.Mutex
+	logger         *zap.Logger
+	excludeNodes   []*encoding.NodeId
 }
 
 func (s *StorageLocationProviderImpl) Start() error {
 	var err error
 
-	s.uris, err = s.services.Storage().GetCachedStorageLocations(s.hash, s.types, true)
+	s.uris, err = s.storage.GetCachedStorageLocations(s.hash, s.types, true)
 	if err != nil {
 		return err
 	}
@@ -50,7 +51,7 @@ func (s *StorageLocationProviderImpl) Start() error {
 		s.availableNodes = append(s.availableNodes, nodeId)
 	}
 
-	s.availableNodes, err = s.services.P2P().SortNodesByScore(s.availableNodes)
+	s.availableNodes, err = s.p2p.SortNodesByScore(s.availableNodes)
 	if err != nil {
 		s.mutex.Unlock()
 		return err
@@ -71,7 +72,7 @@ func (s *StorageLocationProviderImpl) Start() error {
 				break
 			}
 
-			newUris, err := s.services.Storage().GetCachedStorageLocations(s.hash, s.types, false)
+			newUris, err := s.storage.GetCachedStorageLocations(s.hash, s.types, false)
 			if err != nil {
 				s.mutex.Unlock()
 				break
@@ -79,7 +80,7 @@ func (s *StorageLocationProviderImpl) Start() error {
 
 			if len(s.availableNodes) == 0 && len(newUris) < 2 && !requestSent {
 				s.logger.Debug("Sending hash request")
-				err := s.services.P2P().SendHashRequest(s.hash, s.types)
+				err := s.p2p.SendHashRequest(s.hash, s.types)
 				if err != nil {
 					s.logger.Error("Error sending hash request", zap.Error(err))
 					continue
@@ -107,7 +108,7 @@ func (s *StorageLocationProviderImpl) Start() error {
 			}
 
 			if hasNewNode {
-				score, err := s.services.P2P().SortNodesByScore(s.availableNodes)
+				score, err := s.p2p.SortNodesByScore(s.availableNodes)
 				if err != nil {
 					s.logger.Error("Error sorting nodes by score", zap.Error(err))
 				} else {
@@ -197,7 +198,7 @@ func (s *StorageLocationProviderImpl) All() ([]SignedStorageLocation, error) {
 }
 
 func (s *StorageLocationProviderImpl) Upvote(uri SignedStorageLocation) error {
-	err := s.services.P2P().UpVote(uri.NodeId())
+	err := s.p2p.UpVote(uri.NodeId())
 	if err != nil {
 		return err
 	}
@@ -206,7 +207,7 @@ func (s *StorageLocationProviderImpl) Upvote(uri SignedStorageLocation) error {
 }
 
 func (s *StorageLocationProviderImpl) Downvote(uri SignedStorageLocation) error {
-	err := s.services.P2P().DownVote(uri.NodeId())
+	err := s.p2p.DownVote(uri.NodeId())
 	if err != nil {
 		return err
 	}
@@ -221,13 +222,14 @@ func NewStorageLocationProvider(params StorageLocationProviderParams) *StorageLo
 	}
 
 	return &StorageLocationProviderImpl{
-		services:        params.Services,
-		hash:            params.Hash,
-		types:           params.LocationTypes,
+		p2p:            params.P2P,
+		storage:        params.Storage,
+		hash:           params.Hash,
+		types:          params.LocationTypes,
 		timeoutDuration: 60 * time.Second,
-		uris:            make(map[string]StorageLocation),
-		logger:          params.Logger,
-		excludeNodes:    params.ExcludeNodes,
+		uris:           make(map[string]StorageLocation),
+		logger:         params.Logger,
+		excludeNodes:   params.ExcludeNodes,
 	}
 }
 func containsNode(slice []*encoding.NodeId, item *encoding.NodeId) bool {
@@ -240,9 +242,10 @@ func containsNode(slice []*encoding.NodeId, item *encoding.NodeId) bool {
 }
 
 type StorageLocationProviderParams struct {
-	Services      service.Services
+	P2P           service.P2PService
+	Storage       service.StorageService
 	Hash          *encoding.Multihash
 	LocationTypes []StorageLocationType
 	ExcludeNodes  []*encoding.NodeId
-	service.ServiceParams
+	Logger        *zap.Logger
 }
