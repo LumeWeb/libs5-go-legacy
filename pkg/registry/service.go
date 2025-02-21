@@ -29,6 +29,18 @@ type RegistryServiceDefault struct {
 	p2p     service.P2PService
 }
 
+func (r *RegistryServiceDefault) Logger() *zap.Logger {
+	return r.logger
+}
+
+func (r *RegistryServiceDefault) Config() *config.NodeConfig {
+	return r.config
+}
+
+func (r *RegistryServiceDefault) DB() kv.KVStore {
+	return r.db
+}
+
 func (r *RegistryServiceDefault) Start(ctx context.Context) error {
 	return nil
 }
