@@ -151,7 +151,7 @@ func (s *StorageService) GetCachedStorageLocations(hash *encoding.Multihash, kin
 }
 
 func (s *StorageService) getLocalStorageLocation(hash *encoding.Multihash, kinds []types.StorageLocationType) storage.StorageLocation {
-	if s.ProviderStore() != nil {
+	if s.providerStore != nil {
 		if s.providerStore.CanProvide(hash, kinds) {
 			location, _ := s.providerStore.Provide(hash, kinds)
 
