@@ -5,8 +5,7 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"encoding/json"
-	"go.lumeweb.com/libs5-go/types"
-	"go.lumeweb.com/libs5-go/utils"
+	"go.lumeweb.com/libs5-go/pkg/crypto"
 )
 
 type MultihashCode = int
@@ -26,15 +25,15 @@ func NewMultihash(fullBytes []byte) *Multihash {
 	return &Multihash{fullBytes: fullBytes}
 }
 
-func (m *Multihash) FunctionType() types.HashType {
-	return types.HashType(m.fullBytes[0])
+func (m *Multihash) FunctionType() crypto.HashType {
+	return crypto.HashType(m.fullBytes[0])
 }
 
 func (m *Multihash) HashBytes() []byte {
 	return m.fullBytes[1:]
 }
 
-func MultihashFromBytes(bytes []byte, kind types.HashType) *Multihash {
+func MultihashFromBytes(bytes []byte, kind crypto.HashType) *Multihash {
 	return NewMultihash(append([]byte{byte(kind)}, bytes...))
 }
 
@@ -55,7 +54,7 @@ func (m *Multihash) ToBase32() (string, error) {
 }
 
 func (m *Multihash) ToString() (string, error) {
-	if m.FunctionType() == types.HashType(types.CIDTypeBridge) {
+	if m.FunctionType() == crypto.HashType(CIDTypeBridge) {
 		return string(m.fullBytes), nil // Assumes the bytes are valid UTF-8
 	}
 	return m.ToBase64Url()
@@ -63,10 +62,6 @@ func (m *Multihash) ToString() (string, error) {
 
 func (m *Multihash) Equals(other *Multihash) bool {
 	return bytes.Equal(m.fullBytes, other.fullBytes)
-}
-
-func (m *Multihash) HashCode() MultihashCode {
-	return utils.HashCode(m.fullBytes[:4])
 }
 
 func (b *Multihash) UnmarshalJSON(data []byte) error {
