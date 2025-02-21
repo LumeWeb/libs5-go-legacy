@@ -13,10 +13,7 @@ import (
 
 const cacheBucketName = "object-cache"
 
-var (
-	_ service.Service        = (*StorageService)(nil)
-	_ service.StorageService = (*StorageService)(nil)
-)
+var _ service.StorageService = (*StorageService)(nil)
 
 var (
 	ErrUnsupportedMetaFormat = errors.New("unsupported metadata format")

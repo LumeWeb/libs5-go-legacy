@@ -63,7 +63,7 @@ func NewRegistry(config *config.NodeConfig, logger *zap.Logger, db kv.KVStore, p
 		p2p:     p2p,
 	}
 }
-func (r *RegistryServiceDefault) Set(sre protocol.SignedRegistryEntry, trusted bool, receivedFrom net.Peer) error {
+func (r *RegistryServiceDefault) Set(sre registry.SignedRegistryEntry, trusted bool, receivedFrom transport.Peer) error {
 	hash := encoding.NewMultihash(sre.PK())
 	hashString, err := hash.ToString()
 	if err != nil {
@@ -79,13 +79,13 @@ func (r *RegistryServiceDefault) Set(sre protocol.SignedRegistryEntry, trusted b
 		if len(sre.PK()) != 33 {
 			return errors.New("Invalid pubkey")
 		}
-		if int(sre.PK()[0]) != int(types.HashTypeEd25519) {
+		if int(sre.PK()[0]) != int(crypto.HashTypeEd25519) {
 			return errors.New("Only ed25519 keys are supported")
 		}
 		if sre.Revision() < 0 || sre.Revision() > 281474976710656 {
 			return errors.New("Invalid revision")
 		}
-		if len(sre.Data()) > types.RegistryMaxDataSize {
+		if len(sre.Data()) > protocol.RegistryMaxDataSize {
 			return errors.New("Data too long")
 		}
 
