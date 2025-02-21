@@ -1,14 +1,13 @@
 package config
 
 import (
-	"go.lumeweb.com/libs5-go/db"
-	"go.lumeweb.com/libs5-go/ed25519"
+	"go.lumeweb.com/libs5-go/pkg/crypto"
 	"go.uber.org/zap"
 )
 
 type NodeConfig struct {
 	P2P     P2PConfig `mapstructure:"p2p"`
-	KeyPair *ed25519.KeyPairEd25519
+	KeyPair *crypto.KeyPairEd25519
 	DB      db.KVStore
 	Logger  *zap.Logger
 	HTTP    HTTPConfig `mapstructure:"http"`

@@ -1,4 +1,4 @@
-package db
+package kv
 
 type KVStore interface {
 	Open() error
