@@ -2,28 +2,28 @@ package p2p
 
 import (
 	"context"
-	"old/config"
-	"old/db"
-
+	"go.lumeweb.com/libs5-go/pkg/config"
 	"go.lumeweb.com/libs5-go/pkg/crypto"
+	"go.lumeweb.com/libs5-go/pkg/kv"
 	"go.lumeweb.com/libs5-go/pkg/protocol"
+	"go.lumeweb.com/libs5-go/pkg/registry"
 	"go.lumeweb.com/libs5-go/pkg/service"
 	"go.uber.org/zap"
+	_default "old/service/default"
 )
 
 type Node struct {
-	nodeConfig      *config.NodeConfig // Ensure you get this from constructor.
+	nodeConfig      *config.NodeConfig
 	p2pService      service.P2PService
 	registryService service.RegistryService
 	httpService     service.HTTPService
 	storageService  service.StorageService
 
 	logger *zap.Logger
-	db     db.KVStore
+	db     kv.KVStore
 }
 
 func NewNode(cfg *config.NodeConfig, p2p service.P2PService, registry service.RegistryService, http service.HTTPService, storage service.StorageService) (*Node, error) {
-
 	node := &Node{
 		nodeConfig:      cfg,
 		p2pService:      p2p,
@@ -77,7 +77,7 @@ func DefaultNode(config *config.NodeConfig) (*Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	registryService := _default.NewRegistry(params)
+	registryService := registry.NewRegistry(params)
 	httpService := _default.NewHTTP(params)
 	storageService := _default.NewStorage(params)
 
@@ -99,6 +99,6 @@ func (n *Node) GetStorageService() service.StorageService {
 func (n *Node) Config() *config.NodeConfig {
 	return n.nodeConfig
 }
-func (n *Node) GetDB() db.KVStore {
+func (n *Node) GetDB() kv.KVStore {
 	return n.nodeConfig.DB
 }

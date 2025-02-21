@@ -1,10 +1,10 @@
 package transport_test
 
 import (
+	"go.lumeweb.com/libs5-go/pkg/transport"
 	"net/url"
 	"testing"
 
-	"go.lumeweb.com/libs5-go/internal/transport"
 	"go.lumeweb.com/libs5-go/pkg/encoding"
 )
 
