@@ -85,8 +85,8 @@ func (n *StorageService) ProviderStore() ProviderStore {
 	return n.providerStore
 }
 
-func (s *StorageService) GetCachedStorageLocations(hash *encoding.Multihash, kinds []types.StorageLocationType, local bool) (map[string]storage.StorageLocation, error) {
-	locations := make(map[string]storage.StorageLocation)
+func (s *StorageService) GetCachedStorageLocations(hash *encoding.Multihash, kinds []StorageLocationType, local bool) (map[string]StorageLocation, error) {
+	locations := make(map[string]StorageLocation)
 
 	locationMap, err := s.readStorageLocationsFromDB(hash)
 	if err != nil {
@@ -96,7 +96,7 @@ func (s *StorageService) GetCachedStorageLocations(hash *encoding.Multihash, kin
 	if local {
 		localLocation := s.getLocalStorageLocation(hash, kinds)
 		if localLocation != nil {
-			nodeIDStr, err := s.Services().P2P().NodeId().ToString()
+			nodeIDStr, err := s.p2p.NodeId().ToString()
 			if err != nil {
 				return nil, err
 			}
@@ -236,18 +236,15 @@ func (s *StorageService) AddStorageLocation(hash *encoding.Multihash, nodeId *en
 
 func (s *StorageService) DownloadBytesByHash(hash *encoding.Multihash) ([]byte, error) {
 	// Initialize the download URI provider
-	dlUriProvider := provider.NewStorageLocationProvider(provider.StorageLocationProviderParams{
-		Services: s.Services(),
-		Hash:     hash,
-		LocationTypes: []types.StorageLocationType{
-			types.StorageLocationTypeFull,
-			types.StorageLocationTypeFile,
+	dlUriProvider := NewStorageLocationProvider(StorageLocationProviderParams{
+		P2P:     s.p2p,
+		Storage: s,
+		Hash:    hash,
+		LocationTypes: []StorageLocationType{
+			StorageLocationTypeFull,
+			StorageLocationTypeFile,
 		},
-		ServiceParams: service.ServiceParams{
-			Logger: s.Logger(),
-			Config: s.Config(),
-			Db:     s.Db(),
-		},
+		Logger: s.logger,
 	})
 	err := dlUriProvider.Start()
 	if err != nil {

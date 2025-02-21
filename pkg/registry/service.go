@@ -181,8 +181,8 @@ func (r *RegistryServiceDefault) SendRegistryRequest(pk []byte) error {
 	}
 
 	// Iterate over peers and send the request
-	for _, peerVal := range r.Services().P2P().Peers().Values() {
-		peer, ok := peerVal.(net.Peer)
+	for _, peerVal := range r.p2p.Peers().Values() {
+		peer, ok := peerVal.(transport.Peer)
 		if !ok {
 			continue
 		}
@@ -192,7 +192,7 @@ func (r *RegistryServiceDefault) SendRegistryRequest(pk []byte) error {
 			if err != nil {
 				return err
 			}
-			r.Logger().Error("Failed to send registry request", zap.String("peer", pid), zap.Error(err))
+			r.logger.Error("Failed to send registry request", zap.String("peer", pid), zap.Error(err))
 			return err
 		}
 	}
