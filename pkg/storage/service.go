@@ -67,11 +67,11 @@ func (s *StorageService) Init(ctx context.Context) error {
 	return nil
 }
 
-func (n *StorageService) SetProviderStore(store storage.ProviderStore) {
+func (n *StorageService) SetProviderStore(store ProviderStore) {
 	n.providerStore = store
 }
 
-func (n *StorageService) ProviderStore() storage.ProviderStore {
+func (n *StorageService) ProviderStore() ProviderStore {
 	return n.providerStore
 }
 
