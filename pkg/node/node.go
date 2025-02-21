@@ -79,7 +79,7 @@ func DefaultNode(config *config.NodeConfig) (*Node, error) {
 		P2P:      p2p,
 		Registry: registry.NewRegistry(config, config.Logger, config.DB, p2p),
 		HTTP:     http.NewHTTP(config, config.Logger, config.DB, p2p),
-		Storage:  storage.NewStorage(config, config.Logger, config.DB, p2p),
+		Storage:  storage.NewStorage(config, config.Logger, config.DB, p2p, config.KeyPair),
 	}
 
 	return NewNode(params)

@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"net/http"
+	"old/metadata"
 	"time"
 )
 
@@ -54,14 +55,16 @@ type StorageServiceDefault struct {
 	keyPair       *crypto.KeyPairEd25519
 }
 
-func NewStorage(params StorageParams) *StorageServiceDefault {
+// http.NewHTTP(config, config.Logger, config.DB, p2p),
+
+func NewStorage(config *config.NodeConfig, logger *zap.Logger, db kv.KVStore, p2p p2p.P2PService, keyPair *crypto.KeyPairEd25519) *StorageServiceDefault {
 	return &StorageServiceDefault{
 		metadataCache: structs.NewMap(),
-		logger:        params.Logger,
-		config:        params.Config,
-		db:            params.DB,
-		p2p:           params.P2P,
-		keyPair:       params.KeyPair,
+		logger:        logger,
+		config:        config,
+		db:            db,
+		p2p:           p2p,
+		keyPair:       keyPair,
 	}
 }
 
