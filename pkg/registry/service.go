@@ -118,7 +118,7 @@ func (r *RegistryServiceDefault) Set(sre SignedRegistryEntry, trusted bool, rece
 			if existingEntry.Revision() == sre.Revision() {
 				return nil
 			} else if existingEntry.Revision() > sre.Revision() {
-				updateMessage := protocol.MarshalSignedRegistryEntry(existingEntry)
+				updateMessage := MarshalSignedRegistryEntry(existingEntry)
 				err := receivedFrom.SendMessage(updateMessage)
 				if err != nil {
 					return err
@@ -144,7 +144,7 @@ func (r *RegistryServiceDefault) Set(sre SignedRegistryEntry, trusted bool, rece
 		go event.Emit("fire", sre)
 	}
 
-	err = r.bucket.Put(sre.PK(), protocol.MarshalSignedRegistryEntry(sre))
+	err = r.bucket.Put(sre.PK(), MarshalSignedRegistryEntry(sre))
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func (r *RegistryServiceDefault) BroadcastEntry(sre SignedRegistryEntry, receive
 		return err
 	}
 	r.Logger().Debug("[registry] broadcastEntry", zap.String("pk", hashString), zap.Uint64("revision", sre.Revision()), zap.String("receivedFrom", pid))
-	updateMessage := protocol.MarshalSignedRegistryEntry(sre)
+	updateMessage := MarshalSignedRegistryEntry(sre)
 
 	for _, p := range r.p2p.Peers().Values() {
 		peer, ok := p.(transport.Peer)
@@ -282,7 +282,7 @@ func (r *RegistryServiceDefault) Listen(pk []byte, cb func(sre SignedRegistryEnt
 	}
 
 	cbProxy := func(event *emitter.Event) {
-		sre, ok := event.Args[0].(protocol.SignedRegistryEntry)
+		sre, ok := event.Args[0].(SignedRegistryEntry)
 		if !ok {
 			r.Logger().Error("Failed to cast event to SignedRegistryEntry")
 			return
@@ -308,14 +308,14 @@ func (r *RegistryServiceDefault) Listen(pk []byte, cb func(sre SignedRegistryEnt
 	}, nil
 }
 
-func (r *RegistryServiceDefault) getFromDB(pk []byte) (sre protocol.SignedRegistryEntry, err error) {
+func (r *RegistryServiceDefault) getFromDB(pk []byte) (sre SignedRegistryEntry, err error) {
 	value, err := r.bucket.Get(pk)
 	if err != nil {
 		return nil, err
 	}
 
 	if value != nil {
-		sre, err = protocol.UnmarshalSignedRegistryEntry(value)
+		sre, err = UnmarshalSignedRegistryEntry(value)
 		if err != nil {
 			return nil, err
 		}
