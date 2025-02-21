@@ -3,7 +3,7 @@ package encoding
 import (
 	"errors"
 	"github.com/multiformats/go-multibase"
-	"go.lumeweb.com/libs5-go/internal/bases"
+	"go.lumeweb.com/libs5-go/pkg/internal"
 )
 
 var (
