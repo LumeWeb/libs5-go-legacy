@@ -5,7 +5,7 @@ import (
 	"crypto/ed25519"
 	"errors"
 	"fmt"
-	libs5_go "go.lumeweb.com/libs5-go"
+	"go.lumeweb.com/libs5-go/pkg/fs"
 	"io"
 	"sync"
 
@@ -76,7 +76,7 @@ func (d *DefaultCryptoImplementation) HashBlake3Sync(input []byte) ([]byte, erro
 	return d.HashBlake3(ctx, input)
 }
 
-func (d *DefaultCryptoImplementation) HashBlake3File(ctx context.Context, size int64, openRead libs5_go.OpenReadFunction) ([]byte, error) {
+func (d *DefaultCryptoImplementation) HashBlake3File(ctx context.Context, size int64, openRead fs.OpenReadFunction) ([]byte, error) {
 	hash := blake3.New(64, nil)
 
 	for offset := int64(0); offset < size; offset += mbChunk { // 1MB chunks
