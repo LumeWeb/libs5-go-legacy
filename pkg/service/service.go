@@ -22,20 +22,3 @@ type BaseService interface {
 	Stop(ctx context.Context) error
 	Init(ctx context.Context) error
 }
-
-type StorageService interface {
-	GetCachedStorageLocations(hash *encoding.Multihash, kinds []storage.StorageLocationType, local bool) (map[string]storage.StorageLocation, error)
-	AddStorageLocation(hash *encoding.Multihash, nodeId *encoding.NodeId, location storage.StorageLocation, message []byte) error
-	DownloadBytesByHash(hash *encoding.Multihash) ([]byte, error)
-	DownloadBytesByCID(cid *encoding.CID) ([]byte, error)
-	GetMetadataByCID(cid *encoding.CID) (metadata.Metadata, error)
-	ParseMetadata(bytes []byte, cid *encoding.CID) (metadata.Metadata, error)
-	SetProviderStore(store storage.ProviderStore)
-	ProviderStore() storage.ProviderStore
-	Init(ctx context.Context) error
-	Stop(ctx context.Context) error
-	Start(ctx context.Context) error
-	Logger() *zap.Logger
-	Config() *config.NodeConfig
-	DB() kv.KVStore
-}

@@ -207,7 +207,7 @@ func (p *P2PServiceDefault) ConnectToNode(connectionUris []*url.URL, retry uint,
 
 		p.logger.Debug("connect", zap.String("node", connectionUri.String()))
 
-		socket, err := net.CreateTransportSocket(scheme, connectionUri)
+		socket, err := transport.CreateTransportSocket(scheme, connectionUri)
 		if err != nil {
 			if retry > p.nodeConfig.P2P.MaxConnectionAttempts {
 				p.logger.Error("failed to connect, too many retries", zap.String("node", connectionUri.String()), zap.Error(err))

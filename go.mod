@@ -6,6 +6,7 @@ toolchain go1.23.6
 
 require (
 	github.com/emirpasic/gods v1.18.1
+	github.com/go-rq/rq v0.4.0
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/multiformats/go-multibase v0.2.0
 	github.com/olebedev/emitter v0.0.0-20230411050614-349169dec2ba
@@ -26,9 +27,12 @@ require (
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dlclark/regexp2 v1.10.0 // indirect
+	github.com/dop251/goja v0.0.0-20231027120936-b396bb4c349d // indirect
+	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/mr-tron/base58 v1.1.0 // indirect
 	github.com/multiformats/go-base32 v0.0.3 // indirect

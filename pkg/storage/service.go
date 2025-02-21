@@ -3,40 +3,61 @@ package storage
 import (
 	"context"
 	"errors"
+	"github.com/go-rq/rq"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.lumeweb.com/libs5-go/pkg/config"
 	"go.lumeweb.com/libs5-go/pkg/crypto"
 	"go.lumeweb.com/libs5-go/pkg/encoding"
 	"go.lumeweb.com/libs5-go/pkg/kv"
+	"go.lumeweb.com/libs5-go/pkg/p2p"
 	"go.lumeweb.com/libs5-go/pkg/service"
 	"go.lumeweb.com/libs5-go/pkg/structs"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
+	"old/metadata"
+	"old/types"
 	"time"
 )
 
 const cacheBucketName = "object-cache"
 
-var _ service.StorageService = (*StorageService)(nil)
+var _ StorageServiceDefault = (*StorageServiceDefault)(nil)
 
 var (
 	ErrUnsupportedMetaFormat = errors.New("unsupported metadata format")
 )
 
-type StorageService struct {
+type StorageService interface {
+	GetCachedStorageLocations(hash *encoding.Multihash, kinds []StorageLocationType, local bool) (map[string]StorageLocation, error)
+	AddStorageLocation(hash *encoding.Multihash, nodeId *encoding.NodeId, location StorageLocation, message []byte) error
+	DownloadBytesByHash(hash *encoding.Multihash) ([]byte, error)
+	DownloadBytesByCID(cid *encoding.CID) ([]byte, error)
+	GetMetadataByCID(cid *encoding.CID) (metadata.Metadata, error)
+	ParseMetadata(bytes []byte, cid *encoding.CID) (metadata.Metadata, error)
+	SetProviderStore(store ProviderStore)
+	ProviderStore() ProviderStore
+	Init(ctx context.Context) error
+	Stop(ctx context.Context) error
+	Start(ctx context.Context) error
+	Logger() *zap.Logger
+	Config() *config.NodeConfig
+	DB() kv.KVStore
+}
+
+type StorageServiceDefault struct {
 	metadataCache structs.Map
 	providerStore ProviderStore
 	bucket        kv.KVStore
 	logger        *zap.Logger
 	config        *config.NodeConfig
 	db            kv.KVStore
-	p2p           service.P2PService
+	p2p           p2p.P2PService
 	keyPair       *crypto.KeyPairEd25519
 }
 
-func NewStorage(params StorageParams) *StorageService {
-	return &StorageService{
+func NewStorage(params StorageParams) *StorageServiceDefault {
+	return &StorageServiceDefault{
 		metadataCache: structs.NewMap(),
 		logger:        params.Logger,
 		config:        params.Config,
@@ -54,7 +75,7 @@ type StorageParams struct {
 	KeyPair *crypto.KeyPairEd25519
 }
 
-func (s *StorageService) Start(ctx context.Context) error {
+func (s *StorageServiceDefault) Start(ctx context.Context) error {
 
 	bucket, err := s.db.Bucket(cacheBucketName)
 	if err != nil {
@@ -71,23 +92,23 @@ func (s *StorageService) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *StorageService) Stop(ctx context.Context) error {
+func (s *StorageServiceDefault) Stop(ctx context.Context) error {
 	return nil
 }
 
-func (s *StorageService) Init(ctx context.Context) error {
+func (s *StorageServiceDefault) Init(ctx context.Context) error {
 	return nil
 }
 
-func (n *StorageService) SetProviderStore(store ProviderStore) {
+func (n *StorageServiceDefault) SetProviderStore(store ProviderStore) {
 	n.providerStore = store
 }
 
-func (n *StorageService) ProviderStore() ProviderStore {
+func (n *StorageServiceDefault) ProviderStore() ProviderStore {
 	return n.providerStore
 }
 
-func (s *StorageService) GetCachedStorageLocations(hash *encoding.Multihash, kinds []StorageLocationType, local bool) (map[string]StorageLocation, error) {
+func (s *StorageServiceDefault) GetCachedStorageLocations(hash *encoding.Multihash, kinds []StorageLocationType, local bool) (map[string]StorageLocation, error) {
 	locations := make(map[string]StorageLocation)
 
 	locationMap, err := s.readStorageLocationsFromDB(hash)
@@ -155,7 +176,7 @@ func (s *StorageService) GetCachedStorageLocations(hash *encoding.Multihash, kin
 	return locations, nil
 }
 
-func (s *StorageService) getLocalStorageLocation(hash *encoding.Multihash, kinds []StorageLocationType) StorageLocation {
+func (s *StorageServiceDefault) getLocalStorageLocation(hash *encoding.Multihash, kinds []StorageLocationType) StorageLocation {
 	if s.providerStore != nil {
 		if s.providerStore.CanProvide(hash, kinds) {
 			location, _ := s.providerStore.Provide(hash, kinds)
@@ -171,7 +192,7 @@ func (s *StorageService) getLocalStorageLocation(hash *encoding.Multihash, kinds
 	return nil
 }
 
-func (s *StorageService) readStorageLocationsFromDB(hash *encoding.Multihash) (storage.StorageLocationMap, error) {
+func (s *StorageServiceDefault) readStorageLocationsFromDB(hash *encoding.Multihash) (storage.StorageLocationMap, error) {
 	var locationMap storage.StorageLocationMap
 
 	value, err := s.bucket.Get(hash.FullBytes())
@@ -193,7 +214,7 @@ func (s *StorageService) readStorageLocationsFromDB(hash *encoding.Multihash) (s
 	return locationMap, nil
 }
 
-func (s *StorageService) AddStorageLocation(hash *encoding.Multihash, nodeId *encoding.NodeId, location storage.StorageLocation, message []byte) error {
+func (s *StorageServiceDefault) AddStorageLocation(hash *encoding.Multihash, nodeId *encoding.NodeId, location StorageLocation, message []byte) error {
 	// Read existing storage locations
 	locationDb, err := s.readStorageLocationsFromDB(hash)
 	if err != nil {
@@ -208,8 +229,8 @@ func (s *StorageService) AddStorageLocation(hash *encoding.Multihash, nodeId *en
 	// Get or create the inner map for the specific type
 	innerMap, exists := locationDb[location.Type()]
 	if !exists {
-		innerMap = make(storage.NodeStorage, 1)
-		innerMap[nodeIdStr] = make(storage.NodeDetailsStorage, 1)
+		innerMap = make(NodeStorage, 1)
+		innerMap[nodeIdStr] = make(NodeDetailsStorage, 1)
 	}
 
 	// Create location map with new data
@@ -236,7 +257,7 @@ func (s *StorageService) AddStorageLocation(hash *encoding.Multihash, nodeId *en
 	return nil
 }
 
-func (s *StorageService) DownloadBytesByHash(hash *encoding.Multihash) ([]byte, error) {
+func (s *StorageServiceDefault) DownloadBytesByHash(hash *encoding.Multihash) ([]byte, error) {
 	// Initialize the download URI provider
 	dlUriProvider := NewStorageLocationProvider(StorageLocationProviderParams{
 		P2P:     s.p2p,
@@ -309,7 +330,7 @@ func (s *StorageService) DownloadBytesByHash(hash *encoding.Multihash) ([]byte, 
 	}
 }
 
-func (s *StorageService) DownloadBytesByCID(cid *encoding.CID) (bytes []byte, err error) {
+func (s *StorageServiceDefault) DownloadBytesByCID(cid *encoding.CID) (bytes []byte, err error) {
 	bytes, err = s.DownloadBytesByHash(&cid.Hash)
 	if err != nil {
 		return nil, err
@@ -318,7 +339,7 @@ func (s *StorageService) DownloadBytesByCID(cid *encoding.CID) (bytes []byte, er
 	return bytes, nil
 }
 
-func (s *StorageService) GetMetadataByCID(cid *encoding.CID) (md metadata.Metadata, err error) {
+func (s *StorageServiceDefault) GetMetadataByCID(cid *encoding.CID) (md metadata.Metadata, err error) {
 	hashStr, err := cid.Hash.ToString()
 	if err != nil {
 		return nil, err
@@ -345,25 +366,25 @@ func (s *StorageService) GetMetadataByCID(cid *encoding.CID) (md metadata.Metada
 	return md, nil
 }
 
-func (s *StorageService) ParseMetadata(bytes []byte, cid *encoding.CID) (metadata.Metadata, error) {
+func (s *StorageServiceDefault) ParseMetadata(bytes []byte, cid *encoding.CID) (metadata.Metadata, error) {
 	var md metadata.Metadata
 
 	switch cid.Type {
-	case types.CIDTypeMetadataMedia, types.CIDTypeBridge: // Both cases use the same deserialization method
+	case encoding.CIDTypeMetadataMedia, encoding.CIDTypeBridge: // Both cases use the same deserialization method
 		md = metadata.NewEmptyMediaMetadata()
 
 		err := msgpack.Unmarshal(bytes, md)
 		if err != nil {
 			return nil, err
 		}
-	case types.CIDTypeMetadataWebapp:
+	case encoding.CIDTypeMetadataWebapp:
 		md = metadata.NewEmptyWebAppMetadata()
 
 		err := msgpack.Unmarshal(bytes, md)
 		if err != nil {
 			return nil, err
 		}
-	case types.CIDTypeDirectory:
+	case encoding.CIDTypeDirectory:
 		md = metadata.NewEmptyDirectoryMetadata()
 
 		err := msgpack.Unmarshal(bytes, md)
@@ -375,4 +396,8 @@ func (s *StorageService) ParseMetadata(bytes []byte, cid *encoding.CID) (metadat
 	}
 
 	return md, nil
+}
+
+func (s *StorageServiceDefault) Logger() *zap.Logger {
+	return s.logger
 }

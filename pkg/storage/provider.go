@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/samber/lo"
 	"go.lumeweb.com/libs5-go/pkg/encoding"
-	"go.lumeweb.com/libs5-go/pkg/service"
+	"go.lumeweb.com/libs5-go/pkg/p2p"
 	"go.uber.org/zap"
 	"sync"
 	"time"
@@ -14,19 +14,19 @@ import (
 var _ StorageLocationProvider = (*StorageLocationProviderImpl)(nil)
 
 type StorageLocationProviderImpl struct {
-	p2p            service.P2PService
-	storage        service.StorageService
-	hash           *encoding.Multihash
-	types          []StorageLocationType
+	p2p             p2p.P2PService
+	storage         StorageService
+	hash            *encoding.Multihash
+	types           []StorageLocationType
 	timeoutDuration time.Duration
-	availableNodes []*encoding.NodeId
-	uris           map[string]StorageLocation
-	timeout        time.Time
-	isTimedOut     bool
+	availableNodes  []*encoding.NodeId
+	uris            map[string]StorageLocation
+	timeout         time.Time
+	isTimedOut      bool
 	isWaitingForUri bool
-	mutex          sync.Mutex
-	logger         *zap.Logger
-	excludeNodes   []*encoding.NodeId
+	mutex           sync.Mutex
+	logger          *zap.Logger
+	excludeNodes    []*encoding.NodeId
 }
 
 func (s *StorageLocationProviderImpl) Start() error {
@@ -222,14 +222,14 @@ func NewStorageLocationProvider(params StorageLocationProviderParams) *StorageLo
 	}
 
 	return &StorageLocationProviderImpl{
-		p2p:            params.P2P,
-		storage:        params.Storage,
-		hash:           params.Hash,
-		types:          params.LocationTypes,
+		p2p:             params.P2P,
+		storage:         params.Storage,
+		hash:            params.Hash,
+		types:           params.LocationTypes,
 		timeoutDuration: 60 * time.Second,
-		uris:           make(map[string]StorageLocation),
-		logger:         params.Logger,
-		excludeNodes:   params.ExcludeNodes,
+		uris:            make(map[string]StorageLocation),
+		logger:          params.Logger,
+		excludeNodes:    params.ExcludeNodes,
 	}
 }
 func containsNode(slice []*encoding.NodeId, item *encoding.NodeId) bool {
@@ -242,8 +242,8 @@ func containsNode(slice []*encoding.NodeId, item *encoding.NodeId) bool {
 }
 
 type StorageLocationProviderParams struct {
-	P2P           service.P2PService
-	Storage       service.StorageService
+	P2P           p2p.P2PService
+	Storage       StorageService
 	Hash          *encoding.Multihash
 	LocationTypes []StorageLocationType
 	ExcludeNodes  []*encoding.NodeId
