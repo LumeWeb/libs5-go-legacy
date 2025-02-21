@@ -11,7 +11,6 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/transport"
 	"go.lumeweb.com/libs5-go/pkg/vote"
 	"net/url"
-	"old/net"
 	"sort"
 	"sync"
 	"time"
@@ -420,11 +419,6 @@ func (p *P2PServiceDefault) OnNewPeerListen(peer transport.Peer, verifyId bool) 
 			VerifyId: verifyId,
 			Config:   p.nodeConfig,
 			Logger:   p.logger,
-			Mediator: NewMediator(service.ServiceParams{
-				Logger: p.logger,
-				Config: p.nodeConfig,
-				Db:     p.db,
-			}),
 		}
 
 		dec := msgpack.NewDecoder(bytes.NewReader(reader.Data))
