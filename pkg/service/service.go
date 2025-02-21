@@ -45,10 +45,9 @@ type P2PService interface {
 	Init(ctx context.Context) error
 	Stop(ctx context.Context) error
 	Start(ctx context.Context) error
-	SetServices(services Services)
 	Logger() *zap.Logger
 	Config() *config.NodeConfig
-	Db() kv.KVStore
+	DB() kv.KVStore
 }
 
 type RegistryService interface {
@@ -60,10 +59,9 @@ type RegistryService interface {
 	Init(ctx context.Context) error
 	Stop(ctx context.Context) error
 	Start(ctx context.Context) error
-	SetServices(services Services)
 	Logger() *zap.Logger
 	Config() *config.NodeConfig
-	Db() kv.KVStore
+	DB() kv.KVStore
 }
 
 type HTTPService interface {
@@ -71,10 +69,9 @@ type HTTPService interface {
 	Init(ctx context.Context) error
 	Stop(ctx context.Context) error
 	Start(ctx context.Context) error
-	SetServices(services Services)
 	Logger() *zap.Logger
 	Config() *config.NodeConfig
-	Db() kv.KVStore
+	DB() kv.KVStore
 }
 
 type StorageService interface {
@@ -89,9 +86,8 @@ type StorageService interface {
 	Init(ctx context.Context) error
 	Stop(ctx context.Context) error
 	Start(ctx context.Context) error
-	SetServices(services Services)
 	Logger() *zap.Logger
 	Config() *config.NodeConfig
-	Db() kv.KVStore
+	DB() kv.KVStore
 }
 
