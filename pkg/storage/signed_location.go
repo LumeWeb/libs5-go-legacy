@@ -1,6 +1,6 @@
 package storage
 
-import "go.lumeweb.com/libs5-go/encoding"
+import "go.lumeweb.com/libs5-go/pkg/encoding"
 
 type SignedStorageLocation interface {
 	String() string

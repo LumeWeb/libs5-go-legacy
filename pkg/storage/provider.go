@@ -1,27 +1,25 @@
-package provider
+package storage
 
 import (
 	"bytes"
 	"fmt"
 	"github.com/samber/lo"
-	"go.lumeweb.com/libs5-go/encoding"
-	"go.lumeweb.com/libs5-go/service"
-	"go.lumeweb.com/libs5-go/storage"
-	"go.lumeweb.com/libs5-go/types"
+	"go.lumeweb.com/libs5-go/pkg/encoding"
+	"go.lumeweb.com/libs5-go/pkg/service"
 	"go.uber.org/zap"
 	"sync"
 	"time"
 )
 
-var _ storage.StorageLocationProvider = (*StorageLocationProviderImpl)(nil)
+var _ StorageLocationProvider = (*StorageLocationProviderImpl)(nil)
 
 type StorageLocationProviderImpl struct {
 	services        service.Services
 	hash            *encoding.Multihash
-	types           []types.StorageLocationType
+	types           []StorageLocationType
 	timeoutDuration time.Duration
 	availableNodes  []*encoding.NodeId
-	uris            map[string]storage.StorageLocation
+	uris            map[string]StorageLocation
 	timeout         time.Time
 	isTimedOut      bool
 	isWaitingForUri bool
@@ -123,7 +121,7 @@ func (s *StorageLocationProviderImpl) Start() error {
 	}()
 	return nil
 }
-func (s *StorageLocationProviderImpl) Next() (storage.SignedStorageLocation, error) {
+func (s *StorageLocationProviderImpl) Next() (SignedStorageLocation, error) {
 	s.timeout = time.Now().Add(s.timeoutDuration)
 
 	for {
@@ -143,7 +141,7 @@ func (s *StorageLocationProviderImpl) Next() (storage.SignedStorageLocation, err
 				continue
 			}
 
-			return storage.NewSignedStorageLocation(nodeId, uri), nil
+			return NewSignedStorageLocation(nodeId, uri), nil
 		}
 
 		s.isWaitingForUri = true
@@ -159,14 +157,14 @@ func (s *StorageLocationProviderImpl) Next() (storage.SignedStorageLocation, err
 	}
 }
 
-func (s *StorageLocationProviderImpl) All() ([]storage.SignedStorageLocation, error) {
+func (s *StorageLocationProviderImpl) All() ([]SignedStorageLocation, error) {
 	s.timeout = time.Now().Add(s.timeoutDuration)
 
 	for {
 		if len(s.availableNodes) > 0 {
 			s.isWaitingForUri = false
 
-			return lo.FilterMap[*encoding.NodeId, storage.SignedStorageLocation](s.availableNodes, func(nodeId *encoding.NodeId, index int) (storage.SignedStorageLocation, bool) {
+			return lo.FilterMap[*encoding.NodeId, SignedStorageLocation](s.availableNodes, func(nodeId *encoding.NodeId, index int) (SignedStorageLocation, bool) {
 				nodIdStr, err := nodeId.ToString()
 
 				if err != nil {
@@ -181,7 +179,7 @@ func (s *StorageLocationProviderImpl) All() ([]storage.SignedStorageLocation, er
 					return nil, false
 				}
 
-				return storage.NewSignedStorageLocation(nodeId, uri), true
+				return NewSignedStorageLocation(nodeId, uri), true
 			}), nil
 		}
 
@@ -198,7 +196,7 @@ func (s *StorageLocationProviderImpl) All() ([]storage.SignedStorageLocation, er
 	}
 }
 
-func (s *StorageLocationProviderImpl) Upvote(uri storage.SignedStorageLocation) error {
+func (s *StorageLocationProviderImpl) Upvote(uri SignedStorageLocation) error {
 	err := s.services.P2P().UpVote(uri.NodeId())
 	if err != nil {
 		return err
@@ -207,7 +205,7 @@ func (s *StorageLocationProviderImpl) Upvote(uri storage.SignedStorageLocation) 
 	return nil
 }
 
-func (s *StorageLocationProviderImpl) Downvote(uri storage.SignedStorageLocation) error {
+func (s *StorageLocationProviderImpl) Downvote(uri SignedStorageLocation) error {
 	err := s.services.P2P().DownVote(uri.NodeId())
 	if err != nil {
 		return err
@@ -217,8 +215,8 @@ func (s *StorageLocationProviderImpl) Downvote(uri storage.SignedStorageLocation
 
 func NewStorageLocationProvider(params StorageLocationProviderParams) *StorageLocationProviderImpl {
 	if params.LocationTypes == nil {
-		params.LocationTypes = []types.StorageLocationType{
-			types.StorageLocationTypeFull,
+		params.LocationTypes = []StorageLocationType{
+			StorageLocationTypeFull,
 		}
 	}
 
@@ -227,7 +225,7 @@ func NewStorageLocationProvider(params StorageLocationProviderParams) *StorageLo
 		hash:            params.Hash,
 		types:           params.LocationTypes,
 		timeoutDuration: 60 * time.Second,
-		uris:            make(map[string]storage.StorageLocation),
+		uris:            make(map[string]StorageLocation),
 		logger:          params.Logger,
 		excludeNodes:    params.ExcludeNodes,
 	}
@@ -244,7 +242,7 @@ func containsNode(slice []*encoding.NodeId, item *encoding.NodeId) bool {
 type StorageLocationProviderParams struct {
 	Services      service.Services
 	Hash          *encoding.Multihash
-	LocationTypes []types.StorageLocationType
+	LocationTypes []StorageLocationType
 	ExcludeNodes  []*encoding.NodeId
 	service.ServiceParams
 }
