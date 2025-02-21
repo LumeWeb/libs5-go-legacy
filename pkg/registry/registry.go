@@ -9,45 +9,31 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/encoding"
 	"go.lumeweb.com/libs5-go/pkg/kv"
 	"go.lumeweb.com/libs5-go/pkg/protocol"
+	"go.lumeweb.com/libs5-go/pkg/registry/entry"
+	_ "go.lumeweb.com/libs5-go/pkg/registry/entry"
 	"go.lumeweb.com/libs5-go/pkg/transport"
 	"go.uber.org/zap"
 )
 
 var (
-	_ SignedRegistryEntry = (*SignedRegistryEntryImpl)(nil)
-	_ SignedRegistryEntry = (*SignedRegistryEntryImpl)(nil)
+	_ entry.SignedRegistryEntry = (*SignedRegistryEntryImpl)(nil)
+	_ entry.SignedRegistryEntry = (*SignedRegistryEntryImpl)(nil)
 )
 
 const RegistryMaxDataSize = 64
 
 type RegistryService interface {
-	Set(sre SignedRegistryEntry, trusted bool, receivedFrom transport.Peer) error
-	BroadcastEntry(sre SignedRegistryEntry, receivedFrom transport.Peer) error
+	Set(sre entry.SignedRegistryEntry, trusted bool, receivedFrom transport.Peer) error
+	BroadcastEntry(sre entry.SignedRegistryEntry, receivedFrom transport.Peer) error
 	SendRegistryRequest(pk []byte) error
-	Get(pk []byte) (SignedRegistryEntry, error)
-	Listen(pk []byte, cb func(sre SignedRegistryEntry)) (func(), error)
+	Get(pk []byte) (entry.SignedRegistryEntry, error)
+	Listen(pk []byte, cb func(sre entry.SignedRegistryEntry)) (func(), error)
 	Init(ctx context.Context) error
 	Stop(ctx context.Context) error
 	Start(ctx context.Context) error
 	Logger() *zap.Logger
 	Config() *config.NodeConfig
 	DB() kv.KVStore
-}
-
-type SignedRegistryEntry interface {
-	PK() []byte
-	Revision() uint64
-	Data() []byte
-	Signature() []byte
-	SetPK(pk []byte)
-	SetRevision(revision uint64)
-	SetData(data []byte)
-	SetSignature(signature []byte)
-	Verify() bool
-}
-
-type RegistryEntry interface {
-	Sign() SignedRegistryEntry
 }
 
 type SignedRegistryEntryImpl struct {
@@ -93,7 +79,7 @@ func (s *SignedRegistryEntryImpl) SetSignature(signature []byte) {
 	s.signature = signature
 }
 
-func NewSignedRegistryEntry(pk []byte, revision uint64, data []byte, signature []byte) SignedRegistryEntry {
+func NewSignedRegistryEntry(pk []byte, revision uint64, data []byte, signature []byte) entry.SignedRegistryEntry {
 	return &SignedRegistryEntryImpl{
 		pk:        pk,
 		revision:  revision,
@@ -108,7 +94,7 @@ type RegistryEntryImpl struct {
 	revision uint64
 }
 
-func NewRegistryEntry(kp *crypto.KeyPairEd25519, data []byte, revision uint64) RegistryEntry {
+func NewRegistryEntry(kp *crypto.KeyPairEd25519, data []byte, revision uint64) entry.RegistryEntry {
 	return &RegistryEntryImpl{
 		kp:       kp,
 		data:     data,
@@ -116,11 +102,11 @@ func NewRegistryEntry(kp *crypto.KeyPairEd25519, data []byte, revision uint64) R
 	}
 }
 
-func (r *RegistryEntryImpl) Sign() SignedRegistryEntry {
+func (r *RegistryEntryImpl) Sign() entry.SignedRegistryEntry {
 	return SignRegistryEntry(r.kp, r.data, r.revision)
 }
 
-func SignRegistryEntry(kp *crypto.KeyPairEd25519, data []byte, revision uint64) SignedRegistryEntry {
+func SignRegistryEntry(kp *crypto.KeyPairEd25519, data []byte, revision uint64) entry.SignedRegistryEntry {
 	buffer := MarshalRegistryEntry(nil, data, revision)
 
 	privateKey := kp.ExtractBytes()
@@ -128,14 +114,14 @@ func SignRegistryEntry(kp *crypto.KeyPairEd25519, data []byte, revision uint64) 
 
 	return NewSignedRegistryEntry(kp.PublicKey(), revision, data, signature)
 }
-func VerifyRegistryEntry(sre SignedRegistryEntry) bool {
+func VerifyRegistryEntry(sre entry.SignedRegistryEntry) bool {
 	buffer := MarshalRegistryEntry(nil, sre.Data(), sre.Revision())
 	publicKey := sre.PK()[1:]
 
 	return ed25519p.Verify(publicKey, buffer, sre.Signature())
 }
 
-func MarshalSignedRegistryEntry(sre SignedRegistryEntry) []byte {
+func MarshalSignedRegistryEntry(sre entry.SignedRegistryEntry) []byte {
 	buffer := MarshalRegistryEntry(sre.PK(), sre.Data(), sre.Revision())
 	buffer = append(buffer, sre.Signature()...)
 
@@ -159,7 +145,7 @@ func MarshalRegistryEntry(pk []byte, data []byte, revision uint64) []byte {
 	return buffer
 }
 
-func UnmarshalSignedRegistryEntry(event []byte) (sre SignedRegistryEntry, err error) {
+func UnmarshalSignedRegistryEntry(event []byte) (sre entry.SignedRegistryEntry, err error) {
 	if len(event) < 43 {
 		return nil, errors.New("Invalid registry entry")
 	}
