@@ -2,9 +2,10 @@ package http
 
 import (
 	"context"
-	"go.lumeweb.com/libs5-go/internal/transport"
+	"go.lumeweb.com/httputil"
+	"go.lumeweb.com/libs5-go/build"
 	"go.lumeweb.com/libs5-go/pkg/service"
-	transport2 "go.lumeweb.com/libs5-go/pkg/transport"
+	"go.lumeweb.com/libs5-go/pkg/transport"
 	"go.uber.org/zap"
 	"net"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 	"strings"
 )
 
-var _ service.H = (*HTTPServiceDefault)(nil)
+var _ service.HTTPService = (*HTTPServiceDefault)(nil)
 
 type P2PNodesResponse struct {
 	Nodes []P2PNodeResponse `json:"nodes"`
@@ -67,7 +68,7 @@ func (h *HTTPServiceDefault) p2pHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	peer, err := transport.CreateTransportPeer("wss", &transport2.TransportPeerConfig{
+	peer, err := transport.CreateTransportPeer("wss", &transport.TransportPeerConfig{
 		Socket: c,
 		Uris:   []*url.URL{},
 	})
@@ -165,7 +166,7 @@ func (h *HTTPServiceDefault) p2pPeersHandler(w http.ResponseWriter, r *http.Requ
 	ctx := httputil.Context(r, w)
 
 	for _, p := range peers {
-		peer, ok := p.(s5net.Peer)
+		peer, ok := p.(transport.Peer)
 		if !ok {
 			continue
 		}

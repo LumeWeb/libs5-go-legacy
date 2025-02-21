@@ -13,6 +13,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	go.etcd.io/bbolt v1.4.0
 	go.etcd.io/etcd/client/v3 v3.5.18
+	go.lumeweb.com/httputil v0.0.0-20240907105629-dbffb601f2ab
 	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.32.0
 	lukechampine.com/blake3 v1.2.1

@@ -59,6 +59,8 @@ go.etcd.io/etcd/client/pkg/v3 v3.5.18 h1:mZPOYw4h8rTk7TeJ5+3udUkfVGBqc+GCjOJYd68
 go.etcd.io/etcd/client/pkg/v3 v3.5.18/go.mod h1:BxVf2o5wXG9ZJV+/Cu7QNUiJYk4A29sAhoI5tIRsCu4=
 go.etcd.io/etcd/client/v3 v3.5.18 h1:nvvYmNHGumkDjZhTHgVU36A9pykGa2K4lAJ0yY7hcXA=
 go.etcd.io/etcd/client/v3 v3.5.18/go.mod h1:kmemwOsPU9broExyhYsBxX4spCTDX3yLgPMWtpBXG6E=
+go.lumeweb.com/httputil v0.0.0-20240907105629-dbffb601f2ab h1:8FHJm1D00GJNV+5PkaJv+Wyvh5FR+s97rTubAdvi9mA=
+go.lumeweb.com/httputil v0.0.0-20240907105629-dbffb601f2ab/go.mod h1:3aHem0Fj7dH1Kj+WgluoF0WlSyXyUCrJk4bvmdq/Fgs=
 go.uber.org/atomic v1.4.0/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
 go.uber.org/goleak v1.2.0 h1:xqgm/S+aQvhWFTtR0XK3Jvg7z8kGV8P4X14IzwN3Eqk=
 go.uber.org/goleak v1.2.0/go.mod h1:XJYK+MuIchqpmGmUSAzotztawfKvYLUIgg7guXrwVUo=
