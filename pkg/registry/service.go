@@ -20,6 +20,20 @@ const registryBucketName = "registry"
 
 var _ RegistryService = (*RegistryServiceDefault)(nil)
 
+type RegistryService interface {
+	Set(sre protocol.SignedRegistryEntry, trusted bool, receivedFrom transport.Peer) error
+	BroadcastEntry(sre protocol.SignedRegistryEntry, receivedFrom transport.Peer) error
+	SendRegistryRequest(pk []byte) error
+	Get(pk []byte) (protocol.SignedRegistryEntry, error)
+	Listen(pk []byte, cb func(sre protocol.SignedRegistryEntry)) (func(), error)
+	Init(ctx context.Context) error
+	Stop(ctx context.Context) error
+	Start(ctx context.Context) error
+	Logger() *zap.Logger
+	Config() *config.NodeConfig
+	DB() kv.KVStore
+}
+
 type RegistryServiceDefault struct {
 	streams structs.Map
 	subs    structs.Map
@@ -80,7 +94,7 @@ func NewRegistry(config *config.NodeConfig, logger *zap.Logger, db kv.KVStore, p
 		p2p:     p2p,
 	}
 }
-func (r *RegistryServiceDefault) Set(sre SignedRegistryEntry, trusted bool, receivedFrom transport.Peer) error {
+func (r *RegistryServiceDefault) Set(sre protocol.SignedRegistryEntry, trusted bool, receivedFrom transport.Peer) error {
 	hash := encoding.NewMultihash(sre.PK())
 	hashString, err := hash.ToString()
 	if err != nil {
@@ -102,7 +116,7 @@ func (r *RegistryServiceDefault) Set(sre SignedRegistryEntry, trusted bool, rece
 		if sre.Revision() < 0 || sre.Revision() > 281474976710656 {
 			return errors.New("Invalid revision")
 		}
-		if len(sre.Data()) > RegistryMaxDataSize {
+		if len(sre.Data()) > protocol.RegistryMaxDataSize {
 			return errors.New("Data too long")
 		}
 
@@ -121,7 +135,7 @@ func (r *RegistryServiceDefault) Set(sre SignedRegistryEntry, trusted bool, rece
 			if existingEntry.Revision() == sre.Revision() {
 				return nil
 			} else if existingEntry.Revision() > sre.Revision() {
-				updateMessage := MarshalSignedRegistryEntry(existingEntry)
+				updateMessage := protocol.MarshalSignedRegistryEntry(existingEntry)
 				err := receivedFrom.SendMessage(updateMessage)
 				if err != nil {
 					return err
@@ -147,7 +161,7 @@ func (r *RegistryServiceDefault) Set(sre SignedRegistryEntry, trusted bool, rece
 		go event.Emit("fire", sre)
 	}
 
-	err = r.bucket.Put(sre.PK(), MarshalSignedRegistryEntry(sre))
+	err = r.bucket.Put(sre.PK(), protocol.MarshalSignedRegistryEntry(sre))
 	if err != nil {
 		return err
 	}
@@ -159,7 +173,7 @@ func (r *RegistryServiceDefault) Set(sre SignedRegistryEntry, trusted bool, rece
 
 	return nil
 }
-func (r *RegistryServiceDefault) BroadcastEntry(sre SignedRegistryEntry, receivedFrom transport.Peer) error {
+func (r *RegistryServiceDefault) BroadcastEntry(sre protocol.SignedRegistryEntry, receivedFrom transport.Peer) error {
 	hash := encoding.NewMultihash(sre.PK())
 	hashString, err := hash.ToString()
 	if err != nil {
@@ -170,7 +184,7 @@ func (r *RegistryServiceDefault) BroadcastEntry(sre SignedRegistryEntry, receive
 		return err
 	}
 	r.Logger().Debug("[registry] broadcastEntry", zap.String("pk", hashString), zap.Uint64("revision", sre.Revision()), zap.String("receivedFrom", pid))
-	updateMessage := MarshalSignedRegistryEntry(sre)
+	updateMessage := protocol.MarshalSignedRegistryEntry(sre)
 
 	for _, p := range r.p2p.Peers().Values() {
 		peer, ok := p.(transport.Peer)
@@ -219,7 +233,7 @@ func (r *RegistryServiceDefault) SendRegistryRequest(pk []byte) error {
 
 	return nil
 }
-func (r *RegistryServiceDefault) Get(pk []byte) (SignedRegistryEntry, error) {
+func (r *RegistryServiceDefault) Get(pk []byte) (protocol.SignedRegistryEntry, error) {
 	key := encoding.NewMultihash(pk)
 	keyString, err := key.ToString()
 	if err != nil {
@@ -278,14 +292,14 @@ func (r *RegistryServiceDefault) Get(pk []byte) (SignedRegistryEntry, error) {
 	return res, nil
 }
 
-func (r *RegistryServiceDefault) Listen(pk []byte, cb func(sre SignedRegistryEntry)) (func(), error) {
+func (r *RegistryServiceDefault) Listen(pk []byte, cb func(sre protocol.SignedRegistryEntry)) (func(), error) {
 	key, err := encoding.NewMultihash(pk).ToString()
 	if err != nil {
 		return nil, err
 	}
 
 	cbProxy := func(event *emitter.Event) {
-		sre, ok := event.Args[0].(SignedRegistryEntry)
+		sre, ok := event.Args[0].(protocol.SignedRegistryEntry)
 		if !ok {
 			r.Logger().Error("Failed to cast event to SignedRegistryEntry")
 			return
@@ -311,14 +325,14 @@ func (r *RegistryServiceDefault) Listen(pk []byte, cb func(sre SignedRegistryEnt
 	}, nil
 }
 
-func (r *RegistryServiceDefault) getFromDB(pk []byte) (sre SignedRegistryEntry, err error) {
+func (r *RegistryServiceDefault) getFromDB(pk []byte) (sre protocol.SignedRegistryEntry, err error) {
 	value, err := r.bucket.Get(pk)
 	if err != nil {
 		return nil, err
 	}
 
 	if value != nil {
-		sre, err = UnmarshalSignedRegistryEntry(value)
+		sre, err = protocol.UnmarshalSignedRegistryEntry(value)
 		if err != nil {
 			return nil, err
 		}

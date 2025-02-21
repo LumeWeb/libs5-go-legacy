@@ -1,9 +1,8 @@
-package registry
+package protocol
 
 import (
 	"bytes"
 	"go.lumeweb.com/libs5-go/pkg/crypto"
-	"go.lumeweb.com/libs5-go/pkg/protocol"
 	"testing"
 )
 
@@ -95,7 +94,7 @@ func TestMarshalRegistryEntry(t *testing.T) {
 	marshaled := MarshalRegistryEntry(pk, data, revision)
 
 	// Verify the structure
-	if marshaled[0] != byte(protocol.RecordTypeRegistryEntry) {
+	if marshaled[0] != byte(RecordTypeRegistryEntry) {
 		t.Error("Invalid record type in marshaled data")
 	}
 

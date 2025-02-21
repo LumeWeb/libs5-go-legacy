@@ -1,4 +1,4 @@
-package registry
+package protocol
 
 import (
 	"context"
@@ -8,31 +8,11 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/crypto"
 	"go.lumeweb.com/libs5-go/pkg/encoding"
 	"go.lumeweb.com/libs5-go/pkg/kv"
-	"go.lumeweb.com/libs5-go/pkg/protocol"
 	"go.lumeweb.com/libs5-go/pkg/transport"
 	"go.uber.org/zap"
 )
 
-var (
-	_ SignedRegistryEntry = (*SignedRegistryEntryImpl)(nil)
-	_ SignedRegistryEntry = (*SignedRegistryEntryImpl)(nil)
-)
-
 const RegistryMaxDataSize = 64
-
-type RegistryService interface {
-	Set(sre SignedRegistryEntry, trusted bool, receivedFrom transport.Peer) error
-	BroadcastEntry(sre SignedRegistryEntry, receivedFrom transport.Peer) error
-	SendRegistryRequest(pk []byte) error
-	Get(pk []byte) (SignedRegistryEntry, error)
-	Listen(pk []byte, cb func(sre SignedRegistryEntry)) (func(), error)
-	Init(ctx context.Context) error
-	Stop(ctx context.Context) error
-	Start(ctx context.Context) error
-	Logger() *zap.Logger
-	Config() *config.NodeConfig
-	DB() kv.KVStore
-}
 
 type SignedRegistryEntryImpl struct {
 	pk        []byte
@@ -128,7 +108,7 @@ func MarshalSignedRegistryEntry(sre SignedRegistryEntry) []byte {
 
 func MarshalRegistryEntry(pk []byte, data []byte, revision uint64) []byte {
 	var buffer []byte
-	buffer = append(buffer, byte(protocol.RecordTypeRegistryEntry))
+	buffer = append(buffer, byte(RecordTypeRegistryEntry))
 
 	if pk != nil {
 		buffer = append(buffer, pk...)
@@ -182,3 +162,8 @@ type SignedRegistryEntry interface {
 type RegistryEntry interface {
 	Sign() SignedRegistryEntry
 }
+
+var (
+	_ SignedRegistryEntry = (*SignedRegistryEntryImpl)(nil)
+	_ SignedRegistryEntry = (*SignedRegistryEntryImpl)(nil)
+)
