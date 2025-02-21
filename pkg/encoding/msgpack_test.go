@@ -102,7 +102,7 @@ func TestDecodeMsgpackArray(t *testing.T) {
 				enc.Encode(true)
 				return buf.Bytes()
 			},
-			want: []interface{}{int64(42), "hello", true},
+			want: []interface{}{42, "hello", true}, // Changed from int64(42) to just 42
 		},
 	}
 

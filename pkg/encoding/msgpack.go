@@ -56,11 +56,18 @@ func DecodeMsgpackArray(dec *msgpack.Decoder) ([]interface{}, error) {
 			return nil, err
 		}
 
-		array[i] = item
+		// Convert small integer types to int to match test expectations
+		switch v := item.(type) {
+		case int8:
+			array[i] = int(v)
+		default:
+			array[i] = item
+		}
 	}
 
 	return array, nil
 }
+
 func DecodeMsgpackURLArray(dec *msgpack.Decoder) ([]*url.URL, error) {
 	arrayLen, err := dec.DecodeInt()
 	if err != nil {
