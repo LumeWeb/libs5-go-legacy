@@ -37,6 +37,12 @@ func (f *mockPeerFactory) NewPeer(config *TransportPeerConfig) (Peer, error) {
 	peer.SetSocket(config.Socket)
 	peer.SetConnectionURIs(config.Uris)
 
+	// Generate a test ID for the peer
+	testID := encoding.NewNodeId([]byte("test-peer-id"))
+	peer.SetId(testID)
+	peer.SetHandshakeDone(true) // Mark handshake as done
+	peer.SetConnected(true)     // Mark as connected
+
 	uri := config.Uris[0]
 	f.peers[uri.String()] = peer
 	return peer, nil
@@ -131,14 +137,14 @@ func TestManager_Broadcast(t *testing.T) {
 
 	// Set peer as connected
 	mockPeer.SetConnected(true)
-
-	// Set a node ID for the peer
-	nodeID := encoding.NewNodeId([]byte("test-peer-id"))
-	mockPeer.SetId(nodeID)
+	mockPeer.SetHandshakeDone(true)
 
 	testMsg := []byte("broadcast test")
 
 	t.Run("Successful broadcast", func(t *testing.T) {
+		// Clear any existing messages
+		mockPeer.messages = make([][]byte, 0)
+
 		err := mgr.Broadcast(testMsg)
 		if err != nil {
 			t.Fatalf("Broadcast failed: %v", err)
@@ -151,13 +157,22 @@ func TestManager_Broadcast(t *testing.T) {
 	})
 
 	t.Run("Skip peer", func(t *testing.T) {
-		id, _ := mockPeer.Id().ToString()
-		err := mgr.Broadcast(testMsg, id)
+		// Clear messages before skip test
+		mockPeer.messages = make([][]byte, 0)
+
+		// Send one message first
+		err := mgr.Broadcast(testMsg)
 		if err != nil {
-			t.Fatalf("Broadcast failed: %v", err)
+			t.Fatalf("Initial broadcast failed: %v", err)
 		}
 
-		// Message count should not increase since peer was skipped
+		id, _ := mockPeer.Id().ToString()
+		err = mgr.Broadcast(testMsg, id)
+		if err != nil {
+			t.Fatalf("Skip broadcast failed: %v", err)
+		}
+
+		// Should have only the first message
 		if len(mockPeer.messages) != 1 {
 			t.Errorf("Expected 1 message (unchanged), got %d", len(mockPeer.messages))
 		}
