@@ -22,6 +22,8 @@ type DefaultCryptoImplementation struct {
 const mbChunk = 1 << 20
 const maxLength = 10 * 1024 * 1024
 
+var _ CryptoImplementation = (*DefaultCryptoImplementation)(nil)
+
 func NewDefaultCrypto() *DefaultCryptoImplementation {
 	return &DefaultCryptoImplementation{}
 }

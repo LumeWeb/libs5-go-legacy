@@ -12,7 +12,7 @@ import (
 func createTestManager(_ *testing.T) transport.Manager {
 	kp, _ := crypto.GenerateEd25519Key()
 	logger, _ := zap.NewDevelopment()
-	return transport.NewManager(kp, crypto.DefaultCrypto(), logger)
+	return transport.NewManager(kp, crypto.NewDefaultCrypto(), logger)
 }
 
 func TestManager_Connect(t *testing.T) {
