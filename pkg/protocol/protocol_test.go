@@ -1,7 +1,6 @@
 package protocol
 
 import (
-	"github.com/golang/mock/gomock"
 	"os"
 	"testing"
 )

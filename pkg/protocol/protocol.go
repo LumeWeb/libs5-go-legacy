@@ -4,8 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"github.com/vmihailenco/msgpack/v5"
-	"go.lumeweb.com/libs5-go/config"
-	"go.lumeweb.com/libs5-go/net"
 	"go.uber.org/zap"
 	"io"
 	"math"

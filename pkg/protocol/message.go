@@ -1,8 +1,6 @@
 package protocol
 
-import (
-	"go.lumeweb.com/libs5-go/types"
-)
+import ()
 
 var (
 	messageTypes map[int]func() IncomingMessage

@@ -1,11 +1,6 @@
 package protocol
 
 import (
-	"go.lumeweb.com/libs5-go/encoding"
-	"go.lumeweb.com/libs5-go/net"
-	"go.lumeweb.com/libs5-go/storage"
-	"go.lumeweb.com/libs5-go/structs"
-	"go.lumeweb.com/libs5-go/types"
 	"net/url"
 )
 

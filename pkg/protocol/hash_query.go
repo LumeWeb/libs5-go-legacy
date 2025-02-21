@@ -2,11 +2,6 @@ package protocol
 
 import (
 	"github.com/vmihailenco/msgpack/v5"
-	"go.lumeweb.com/libs5-go/encoding"
-	"go.lumeweb.com/libs5-go/net"
-	"go.lumeweb.com/libs5-go/storage"
-	"go.lumeweb.com/libs5-go/structs"
-	"go.lumeweb.com/libs5-go/types"
 	"go.uber.org/zap"
 	"log"
 )

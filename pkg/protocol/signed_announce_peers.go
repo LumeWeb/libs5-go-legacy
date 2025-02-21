@@ -2,9 +2,6 @@ package protocol
 
 import (
 	"github.com/vmihailenco/msgpack/v5"
-	"go.lumeweb.com/libs5-go/encoding"
-	"go.lumeweb.com/libs5-go/net"
-	"go.lumeweb.com/libs5-go/types"
 	"net/url"
 )
 

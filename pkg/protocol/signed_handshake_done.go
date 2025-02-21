@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/vmihailenco/msgpack/v5"
-	"go.lumeweb.com/libs5-go/types"
-	"go.lumeweb.com/libs5-go/utils"
 	"net/url"
 )
 
