@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -20,12 +21,6 @@ func TestWebSocketPeer_SendMessage(t *testing.T) {
 			t.Fatal(err)
 			return
 		}
-		defer func() {
-			err := conn.Close(websocket.StatusInternalError, "")
-			if err != nil {
-				t.Error(err)
-			}
-		}()
 
 		// Read the test message
 		_, msg, err := conn.Read(context.Background())
@@ -33,31 +28,29 @@ func TestWebSocketPeer_SendMessage(t *testing.T) {
 			t.Fatal(err)
 			return
 		}
-		err = conn.Close(websocket.StatusNormalClosure, "")
-		if err != nil {
-			t.Error(err)
-		}
 
 		if string(msg) != "test message" {
 			t.Errorf("Expected 'test message', got %q", string(msg))
 		}
+
+		// Close cleanly after reading
+		if err := conn.Close(websocket.StatusNormalClosure, ""); err != nil {
+			t.Error(err)
+		}
 	}))
 	defer s.Close()
+
+	// Convert http URL to WebSocket URL
+	wsURL := "ws" + strings.TrimPrefix(s.URL, "http")
 
 	// Connect client
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	c, _, err := websocket.Dial(ctx, s.URL, nil)
+	c, _, err := websocket.Dial(ctx, wsURL, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() {
-		err := c.Close(websocket.StatusInternalError, "")
-		if err != nil {
-			t.Error(err)
-		}
-	}()
 
 	peer := &WebSocketPeer{
 		socket: c,
@@ -68,8 +61,8 @@ func TestWebSocketPeer_SendMessage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = c.Close(websocket.StatusNormalClosure, "")
-	if err != nil {
+	// Close cleanly after sending
+	if err := peer.End(); err != nil {
 		t.Error(err)
 	}
 }
@@ -83,12 +76,6 @@ func TestWebSocketPeer_ListenForMessages(t *testing.T) {
 			t.Fatal(err)
 			return
 		}
-		defer func() {
-			err := conn.Close(websocket.StatusInternalError, "")
-			if err != nil {
-				t.Error(err)
-			}
-		}()
 
 		// Send test message
 		err = conn.Write(context.Background(), websocket.MessageBinary, []byte("test message"))
@@ -98,17 +85,19 @@ func TestWebSocketPeer_ListenForMessages(t *testing.T) {
 
 		// Wait briefly then close normally
 		time.Sleep(100 * time.Millisecond)
-		err = conn.Close(websocket.StatusNormalClosure, "")
-		if err != nil {
+		if err := conn.Close(websocket.StatusNormalClosure, ""); err != nil {
 			t.Error(err)
 		}
 	}))
 	defer s.Close()
 
+	// Convert http URL to WebSocket URL
+	wsURL := "ws" + strings.TrimPrefix(s.URL, "http")
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	c, _, err := websocket.Dial(ctx, s.URL, nil)
+	c, _, err := websocket.Dial(ctx, wsURL, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -120,9 +109,8 @@ func TestWebSocketPeer_ListenForMessages(t *testing.T) {
 	received := make(chan []byte)
 	closed := make(chan struct{})
 
-	onClose := func() { close(closed) }
 	options := ListenerOptions{
-		OnClose: onClose,
+		OnClose: func() { close(closed) },
 	}
 
 	go peer.ListenForMessages(func(msg []byte) error {
