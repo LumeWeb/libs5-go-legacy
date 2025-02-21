@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/vmihailenco/msgpack/v5"
-	"go.lumeweb.com/libs5-go/types"
-	"go.lumeweb.com/libs5-go/utils"
 )
 
 type EncryptedCID struct {
@@ -48,7 +46,7 @@ func DecodeEncryptedCID(cid string) (*EncryptedCID, error) {
 }
 
 func EncryptedCIDFromBytes(data []byte) (*EncryptedCID, error) {
-	if types.CIDType(data[0]) != types.CIDTypeEncryptedStatic {
+	if CIDType(data[0]) != CIDTypeEncryptedStatic {
 		return nil, errors.New("Invalid CID type")
 	}
 
@@ -59,7 +57,7 @@ func EncryptedCIDFromBytes(data []byte) (*EncryptedCID, error) {
 
 	encryptedBlobHash := NewMultihash(data[3:36])
 	encryptionKey := data[36:68]
-	padding := utils.DecodeEndian(data[68:72])
+	padding := DecodeEndian(data[68:72])
 	chunkSizeAsPowerOf2 := int(data[2])
 	encryptionAlgorithm := data[1]
 
@@ -72,13 +70,13 @@ func (c *EncryptedCID) ChunkSize() int {
 
 func (c *EncryptedCID) ToBytes() []byte {
 	data := []byte{
-		byte(types.CIDTypeEncryptedStatic),
+		byte(CIDTypeEncryptedStatic),
 		c.encryptionAlgorithm,
 		byte(c.chunkSizeAsPowerOf2),
 	}
 	data = append(data, c.encryptedBlobHash.fullBytes...)
 	data = append(data, c.encryptionKey...)
-	data = append(data, utils.EncodeEndian(c.padding, 4)...)
+	data = append(data, EncodeEndian(c.padding, 4)...)
 	data = append(data, c.OriginalCID.ToBytes()...)
 	return data
 }
