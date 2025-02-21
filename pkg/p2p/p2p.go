@@ -30,6 +30,8 @@ var (
 	errConnectionIdMissingNodeID = errors.New("connection id missing node id")
 )
 
+var _ P2PService = (*P2PServiceDefault)(nil)
+
 type P2PService interface {
 	service.BaseService
 	SelfConnectionUris() []*url.URL
@@ -674,12 +676,6 @@ func (n *P2PServiceDefault) Logger() *zap.Logger {
 func (n *P2PServiceDefault) Config() *config.NodeConfig {
 	return n.nodeConfig
 }
-func (n *P2PServiceDefault) Db() db.KVStore {
+func (n *P2PServiceDefault) Db() kv.KVStore {
 	return n.db
-}
-func (n *P2PServiceDefault) Services() service.Services {
-	return nil
-}
-func (n *P2PServiceDefault) SetServices(services service.Services) {
-	//noop
 }

@@ -4,10 +4,12 @@ import (
 	"context"
 	"go.lumeweb.com/libs5-go/pkg/config"
 	"go.lumeweb.com/libs5-go/pkg/crypto"
+	"go.lumeweb.com/libs5-go/pkg/http"
 	"go.lumeweb.com/libs5-go/pkg/kv"
 	"go.lumeweb.com/libs5-go/pkg/protocol"
 	"go.lumeweb.com/libs5-go/pkg/registry"
 	"go.lumeweb.com/libs5-go/pkg/service"
+	"go.lumeweb.com/libs5-go/pkg/storage"
 	"go.uber.org/zap"
 	_default "old/service/default"
 )
@@ -15,9 +17,9 @@ import (
 // Node represents the main application node that coordinates all services
 type Node struct {
 	config   *config.NodeConfig
-	p2p      service.P2PService
-	registry service.RegistryService
-	http     service.HTTPService
+	p2p      P2PService
+	registry registry.RegistryService
+	http     http.HTTPService
 	storage  service.StorageService
 	logger   *zap.Logger
 	db       kv.KVStore
@@ -39,11 +41,12 @@ func NewNode(params NodeParams) (*Node, error) {
 // NodeParams contains all dependencies needed to create a new Node
 type NodeParams struct {
 	Config   *config.NodeConfig
-	P2P      service.P2PService
-	Registry service.RegistryService
-	HTTP     service.HTTPService
+	P2P      P2PService
+	Registry registry.RegistryService
+	HTTP     http.HTTPService
 	Storage  service.StorageService
 }
+
 // Start initializes and starts all services
 func (n *Node) Start(ctx context.Context) error {
 	protocol.RegisterProtocols()
@@ -75,12 +78,13 @@ func DefaultNode(config *config.NodeConfig) (*Node, error) {
 		Config:   config,
 		P2P:      p2p,
 		Registry: registry.NewRegistry(config, config.Logger, config.DB),
-		HTTP:     _default.NewHTTP(config, config.Logger, config.DB),
-		Storage:  _default.NewStorage(config, config.Logger, config.DB),
+		HTTP:     http.NewHTTP(config, config.Logger, config.DB),
+		Storage:  storage.NewStorage(config, config.Logger, config.DB),
 	}
 
 	return NewNode(params)
 }
+
 // Logger returns the node's logger instance
 func (n *Node) Logger() *zap.Logger {
 	return n.logger

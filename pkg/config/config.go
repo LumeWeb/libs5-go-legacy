@@ -7,17 +7,17 @@ import (
 )
 
 type NodeConfig struct {
-	P2P     P2PConfig `mapstructure:"p2p"`
+	P2P     *P2PConfig `mapstructure:"p2p"`
 	KeyPair *crypto.KeyPairEd25519
 	DB      kv.KVStore
 	Logger  *zap.Logger
 	HTTP    HTTPConfig `mapstructure:"http"`
 }
 type P2PConfig struct {
-	Network                 string      `mapstructure:"network"`
-	Peers                   PeersConfig `mapstructure:"peers"`
-	MaxOutgoingPeerFailures uint        `mapstructure:"max_outgoing_peer_failures"`
-	MaxConnectionAttempts   uint        `mapstructure:"max_connection_attempts"`
+	Network                 string       `mapstructure:"network"`
+	Peers                   *PeersConfig `mapstructure:"peers"`
+	MaxOutgoingPeerFailures uint         `mapstructure:"max_outgoing_peer_failures"`
+	MaxConnectionAttempts   uint         `mapstructure:"max_connection_attempts"`
 }
 
 type PeersConfig struct {
