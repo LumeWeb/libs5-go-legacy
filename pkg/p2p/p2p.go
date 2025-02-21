@@ -20,7 +20,7 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/encoding"
 	"go.lumeweb.com/libs5-go/pkg/protocol"
 	"go.lumeweb.com/libs5-go/pkg/service"
-	"go.lumeweb.com/libs5-go/pkg/structs" // Assuming you still want this
+	"go.lumeweb.com/libs5-go/pkg/structs"
 	"go.uber.org/zap"
 )
 
