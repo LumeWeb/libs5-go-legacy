@@ -9,6 +9,7 @@ import (
 	"go.lumeweb.com/libs5-go/pkg/kv"
 	"go.lumeweb.com/libs5-go/pkg/storage"
 	"go.lumeweb.com/libs5-go/pkg/transport"
+	"go.lumeweb.com/libs5-go/pkg/vote"
 	"net/url"
 	"old/net"
 	"sort"
@@ -79,7 +80,7 @@ type P2PServiceDefault struct {
 	// Add any other P2P-specific fields here
 }
 
-func NewP2PService(cfg *config.NodeConfig, crypto crypto.CryptoImplementation, db db.KVStore, logger *zap.Logger, selfConnectionUris []*url.URL) (*P2PServiceDefault, error) {
+func NewP2PService(cfg *config.NodeConfig, crypto crypto.CryptoImplementation, db kv.KVStore, logger *zap.Logger, selfConnectionUris []*url.URL) (*P2PServiceDefault, error) {
 	localNodeID := encoding.NewNodeId(cfg.KeyPair.PublicKey())
 	if selfConnectionUris == nil || len(selfConnectionUris) == 0 {
 		uri, err := url.Parse(fmt.Sprintf("wss://%s:%d/s5/p2p", cfg.HTTP.API.Domain, cfg.HTTP.API.Port))
@@ -471,7 +472,7 @@ func (p *P2PServiceDefault) GetNodeScore(nodeId *encoding.NodeId) (float64, erro
 
 }
 
-func (p *P2PServiceDefault) readNodeVotes(nodeId *encoding.NodeId) (service.NodeVotes, error) {
+func (p *P2PServiceDefault) readNodeVotes(nodeId *encoding.NodeId) (vote.NodeVotes, error) {
 	var value []byte
 
 	value, err := p.db.Get(nodeId.Raw())
@@ -480,10 +481,10 @@ func (p *P2PServiceDefault) readNodeVotes(nodeId *encoding.NodeId) (service.Node
 	}
 
 	if value == nil {
-		return service.NewNodeVotes(), nil
+		return vote.NewNodeVotes(), nil
 	}
 
-	score := service.NewNodeVotes()
+	score := vote.NewNodeVotes()
 	err = msgpack.Unmarshal(value, &score)
 	if err != nil {
 		return nil, err
@@ -491,7 +492,7 @@ func (p *P2PServiceDefault) readNodeVotes(nodeId *encoding.NodeId) (service.Node
 
 	return score, nil
 }
-func (p *P2PServiceDefault) saveNodeVotes(nodeId *encoding.NodeId, votes service.NodeVotes) error {
+func (p *P2PServiceDefault) saveNodeVotes(nodeId *encoding.NodeId, votes vote.NodeVotes) error {
 	// Marshal the votes into data
 	data, err := msgpack.Marshal(votes)
 	if err != nil {
