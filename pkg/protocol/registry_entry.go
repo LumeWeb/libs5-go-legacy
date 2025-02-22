@@ -2,10 +2,11 @@ package protocol
 
 import (
 	"github.com/vmihailenco/msgpack/v5"
+	"go.lumeweb.com/libs5-go/pkg/encoding"
 	bases "go.lumeweb.com/libs5-go/pkg/internal"
-	"go.lumeweb.com/libs5-go/pkg/registry"
+	"go.lumeweb.com/libs5-go/pkg/protocol/registry"
+	"go.lumeweb.com/libs5-go/pkg/protocol/types"
 	"go.uber.org/zap"
-	"old/types"
 )
 
 var _ IncomingMessage = (*RegistryEntryRequest)(nil)
@@ -23,7 +24,7 @@ func NewEmptyRegistryEntryRequest() *RegistryEntryRequest {
 
 	return rer
 }
-func NewRegistryEntryRequest(sre SignedRegistryEntry) *RegistryEntryRequest {
+func NewRegistryEntryRequest(sre registry.SignedRegistryEntry) *RegistryEntryRequest {
 	return &RegistryEntryRequest{sre: sre}
 }
 
@@ -33,7 +34,7 @@ func (s *RegistryEntryRequest) EncodeMsgpack(enc *msgpack.Encoder) error {
 		return err
 	}
 
-	err = enc.EncodeBytes(MarshalSignedRegistryEntry(s.sre))
+	err = enc.EncodeBytes(registry.MarshalSignedRegistryEntry(s.sre))
 	if err != nil {
 		return err
 	}
@@ -42,7 +43,7 @@ func (s *RegistryEntryRequest) EncodeMsgpack(enc *msgpack.Encoder) error {
 }
 
 func (s *RegistryEntryRequest) DecodeMessage(dec *msgpack.Decoder, message IncomingMessageData) error {
-	sre, err := UnmarshalSignedRegistryEntry(message.Original)
+	sre, err := registry.UnmarshalSignedRegistryEntry(message.Original)
 	if err != nil {
 		return err
 	}

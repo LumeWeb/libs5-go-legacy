@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"go.lumeweb.com/libs5-go/pkg/config"
 	"go.lumeweb.com/libs5-go/pkg/kv"
+	"go.lumeweb.com/libs5-go/pkg/protocol/types"
 	"go.lumeweb.com/libs5-go/pkg/storage/location"
 	"go.lumeweb.com/libs5-go/pkg/transport"
 	"go.lumeweb.com/libs5-go/pkg/vote"
@@ -415,7 +416,7 @@ func (p *P2PServiceDefault) OnNewPeerListen(peer transport.Peer, verifyId bool) 
 		}
 
 		if handler.RequiresHandshake() && !peer.IsHandshakeDone() {
-			p.logger.Debug("Peer is not handshake done, ignoring message", zap.Any("type", protocol.ProtocolMethodMap[protocol.ProtocolMethod(reader.Kind)]))
+			p.logger.Debug("Peer is not handshake done, ignoring message", zap.Any("type", types.ProtocolMethodMap[types.ProtocolMethod(reader.Kind)]))
 			return nil
 		}
 

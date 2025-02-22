@@ -1,4 +1,4 @@
-package protocol
+package mediator
 
 import (
 	"go.lumeweb.com/libs5-go/pkg/encoding"

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmihailenco/msgpack/v5"
+	"go.lumeweb.com/libs5-go/pkg/protocol/types"
 	"testing"
 )
 
@@ -72,7 +73,7 @@ func TestHandshakeOpen_EncodeMsgpack(t *testing.T) {
 				t.Errorf("DecodeUint() error = %v", err)
 			}
 
-			assert.EqualValues(t, ProtocolMethodHandshakeOpen, protocolMethod)
+			assert.EqualValues(t, types.ProtocolMethodHandshakeOpen, protocolMethod)
 
 			challenge, err := dec.DecodeBytes()
 			if err != nil {

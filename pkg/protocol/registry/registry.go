@@ -1,15 +1,11 @@
-package protocol
+package registry
 
 import (
-	"context"
 	ed25519p "crypto/ed25519"
 	"errors"
-	"go.lumeweb.com/libs5-go/pkg/config"
 	"go.lumeweb.com/libs5-go/pkg/crypto"
 	"go.lumeweb.com/libs5-go/pkg/encoding"
-	"go.lumeweb.com/libs5-go/pkg/kv"
-	"go.lumeweb.com/libs5-go/pkg/transport"
-	"go.uber.org/zap"
+	"go.lumeweb.com/libs5-go/pkg/protocol/types"
 )
 
 const RegistryMaxDataSize = 64
@@ -108,7 +104,7 @@ func MarshalSignedRegistryEntry(sre SignedRegistryEntry) []byte {
 
 func MarshalRegistryEntry(pk []byte, data []byte, revision uint64) []byte {
 	var buffer []byte
-	buffer = append(buffer, byte(RecordTypeRegistryEntry))
+	buffer = append(buffer, byte(types.RecordTypeRegistryEntry))
 
 	if pk != nil {
 		buffer = append(buffer, pk...)

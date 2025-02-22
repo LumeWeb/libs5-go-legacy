@@ -3,6 +3,7 @@ package protocol
 import (
 	"fmt"
 	"github.com/vmihailenco/msgpack/v5"
+	"go.lumeweb.com/libs5-go/pkg/protocol/types"
 )
 
 var _ EncodeableMessage = (*HandshakeOpen)(nil)
@@ -38,7 +39,7 @@ func NewHandshakeOpen(challenge []byte, networkId string) *HandshakeOpen {
 	return ho
 }
 func (h HandshakeOpen) EncodeMsgpack(enc *msgpack.Encoder) error {
-	err := enc.EncodeUint(uint64(ProtocolMethodHandshakeOpen))
+	err := enc.EncodeUint(uint64(types.ProtocolMethodHandshakeOpen))
 	if err != nil {
 		return err
 	}
@@ -96,7 +97,7 @@ func (h *HandshakeOpen) HandleMessage(message IncomingMessageData) error {
 		return fmt.Errorf("Peer is in different network: %s", h.networkId)
 	}
 
-	handshake := NewHandshakeDoneRequest(h.handshake, SupportedFeatures, mediator.SelfConnectionUris())
+	handshake := NewHandshakeDoneRequest(h.handshake, types.SupportedFeatures, mediator.SelfConnectionUris())
 	hsMessage, err := msgpack.Marshal(handshake)
 
 	if err != nil {

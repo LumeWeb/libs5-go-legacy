@@ -2,7 +2,10 @@ package protocol
 
 import (
 	"github.com/vmihailenco/msgpack/v5"
+	bases "go.lumeweb.com/libs5-go/pkg/internal"
+	"go.lumeweb.com/libs5-go/pkg/protocol/registry"
 	"go.uber.org/zap"
+	"old/types"
 )
 
 var _ IncomingMessage = (*RegistryQuery)(nil)
@@ -73,7 +76,7 @@ func (s *RegistryQuery) HandleMessage(message IncomingMessageData) error {
 	}
 
 	if sre != nil {
-		err := peer.SendMessage(MarshalSignedRegistryEntry(sre))
+		err := peer.SendMessage(registry.MarshalSignedRegistryEntry(sre))
 		if err != nil {
 			return err
 		}

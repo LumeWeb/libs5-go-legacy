@@ -4,12 +4,12 @@ import (
 	ed25519p "crypto/ed25519"
 	"go.lumeweb.com/libs5-go/pkg/crypto"
 	"go.lumeweb.com/libs5-go/pkg/encoding"
-	"go.lumeweb.com/libs5-go/pkg/protocol"
+	"go.lumeweb.com/libs5-go/pkg/protocol/types"
 )
 
 func PrepareProvideMessage(identity *crypto.KeyPairEd25519, hash *encoding.Blob, location StorageLocation) []byte {
 	// Initialize the list with the record type.
-	list := []byte{byte(protocol.RecordTypeStorageLocation)}
+	list := []byte{byte(types.RecordTypeStorageLocation)}
 
 	// Append the full bytes of the hash.
 	list = append(list, hash.FullBytes()...)
