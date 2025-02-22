@@ -3,14 +3,13 @@ package protocol
 import (
 	"github.com/vmihailenco/msgpack/v5"
 	"go.lumeweb.com/libs5-go/pkg/encoding"
+	"go.lumeweb.com/libs5-go/pkg/protocol/types"
 	"go.lumeweb.com/libs5-go/pkg/storage"
 	"go.lumeweb.com/libs5-go/pkg/storage/location"
 	"go.lumeweb.com/libs5-go/pkg/structs"
 	"go.lumeweb.com/libs5-go/pkg/transport"
 	"go.uber.org/zap"
 	"log"
-	"old/net"
-	"old/types"
 )
 
 var _ EncodeableMessage = (*HashQuery)(nil)
